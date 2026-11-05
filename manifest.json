@@ -1,0 +1,134 @@
+{
+ "name": "DDV Game Hub",
+ "version": "1.0.0",
+ "updated": "2026-11-05 01:25",
+ "notes": "",
+ "facts": [
+  "DDV Game Hub — проект создателя ddv_7202",
+  "Игры хранятся на GitHub: лаунчер сам докачивает только изменившиеся файлы",
+  "Твой прогресс, рекорды и настройки хранятся на твоём компьютере и не слетают при обновлении",
+  "Нашёл баг или есть идея для новой игры? Заходи в Discord создателя"
+ ],
+ "files": [
+  {
+   "path": "aim.html",
+   "sha256": "81be5516367538245e16196571fe500eb8517748f25f2503d8461c660a2d9ce3",
+   "size": 3043
+  },
+  {
+   "path": "blackjack.html",
+   "sha256": "dcfa14f09606028602da6d4c901a6d40639a50f2b38bd939ff93db96825fa558",
+   "size": 4178
+  },
+  {
+   "path": "breakout.html",
+   "sha256": "af279a05454498e7e5ab45e48fb69cc83a4c2c7ca85c07f431315bf44f8ae121",
+   "size": 5428
+  },
+  {
+   "path": "casino.html",
+   "sha256": "4254770923be02300196c3c6016e466aacc82e4b45368c09e887a98afe9b6fd5",
+   "size": 13077
+  },
+  {
+   "path": "clicker.html",
+   "sha256": "8d975fc387a9b85d12806eaa3ad2ddb6b82a334fef1a7d66f8550f1a1aa59ebe",
+   "size": 4736
+  },
+  {
+   "path": "common.js",
+   "sha256": "ca371d762521ec18b8499c73ae12462e395c15ac34f7b0bdcc3014a0a540374f",
+   "size": 26308
+  },
+  {
+   "path": "dice.html",
+   "sha256": "3c247f01fc80d04245a9c5846870d9dd6cf36749a59626f70cdb4bb344acc113",
+   "size": 2832
+  },
+  {
+   "path": "draw.html",
+   "sha256": "da0fc0507ea3a4f1463f428e0f339062d4b48c072189c643f512b6b5aa0e6803",
+   "size": 2497
+  },
+  {
+   "path": "flappy.html",
+   "sha256": "06729c4a83ab9cf670800e3e4e1831ed3e768dfc8f7fea7589d2f7cea915de32",
+   "size": 3098
+  },
+  {
+   "path": "g2048.html",
+   "sha256": "67eefcc4125df7e3a48dc41b743df0701f2a2efb5725c97954507a31ef470ff5",
+   "size": 3927
+  },
+  {
+   "path": "game.html",
+   "sha256": "1f83aee153b8f13621e1850ae22db6b75a7e5a06ca2de88291f3333801933940",
+   "size": 61608
+  },
+  {
+   "path": "invaders.html",
+   "sha256": "bdfcec4e1d00a6f21ff376fdf237141f951830012ce59f59fd39504500f8eff8",
+   "size": 5217
+  },
+  {
+   "path": "launcher.html",
+   "sha256": "0bba31aaff884f3ea8b4b51ebefeda42da8a30d89974b3d54ec641754a2a2dd6",
+   "size": 19115
+  },
+  {
+   "path": "memory.html",
+   "sha256": "373ed20ad3a669f8f3ba2a456e48306b229fd0be351f64f51afb7cea6b0410ec",
+   "size": 3605
+  },
+  {
+   "path": "mines.html",
+   "sha256": "0156e606af5ffe4ab9f91f7e94afdb3691e85d0aaad67226299990afe7d3f48e",
+   "size": 4804
+  },
+  {
+   "path": "piano.html",
+   "sha256": "4a36e42bc5ba63d2e1b7bbc9e053fa62e66f67a081b9188aa91e4cc1146a2e71",
+   "size": 3762
+  },
+  {
+   "path": "poker.html",
+   "sha256": "bbf19f100d7e77188f1f80f5b8f288324d1e00b5f59552f27c14dd6437be1523",
+   "size": 3358
+  },
+  {
+   "path": "puzzle15.html",
+   "sha256": "b1e124bfeec0131d614685b383c57626e255ab9757a53bc911e719d006bd38bf",
+   "size": 3086
+  },
+  {
+   "path": "roulette.html",
+   "sha256": "5d6b6c58763eeff3ab5ed6c8c44789d6dfdbfd5c501acefa434f120a63d9d356",
+   "size": 7340
+  },
+  {
+   "path": "snake.html",
+   "sha256": "415baeabd842a431fd494a5596c835d6ab590b3e0c6676f61e6b69c47e5aa4bd",
+   "size": 5174
+  },
+  {
+   "path": "tetris.html",
+   "sha256": "cc95270295e594aafb10d7b08de6959ee3d2b8a6c987bd3800a82abd0efb8e22",
+   "size": 5190
+  },
+  {
+   "path": "ttt.html",
+   "sha256": "d563d27d4f169cce228df1fb49b1391d5d5379cde34a8e7395c57e08fac4afe4",
+   "size": 2941
+  },
+  {
+   "path": "upgrader.html",
+   "sha256": "3d57d780c2e5ce71f41703bf918591eed062aad82ee3a91db5a0caad194e5756",
+   "size": 14509
+  },
+  {
+   "path": "words.html",
+   "sha256": "1d01ead452660516a0cc284af986b51e4115dbd3e56c38af5a7ceca8f7d075ab",
+   "size": 4625
+  }
+ ]
+}
