@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>2048</title>
+<style>
+.wrap{display:flex;flex-direction:column;align-items:center;gap:14px;padding:70px 16px 24px}
+.hud{display:flex;gap:12px;align-items:stretch;flex-wrap:wrap;justify-content:center}.box{padding:8px 20px;border-radius:12px;background:rgba(10,6,28,.7);border:1px solid var(--c1);text-align:center}.box b{display:block;font-size:24px;color:var(--c3)}
+#b{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:12px;border-radius:18px;background:rgba(10,6,28,.72);border:2px solid var(--c1);box-shadow:0 0 30px var(--c1);width:min(92vw,440px);aspect-ratio:1}
+.t{display:grid;place-items:center;border-radius:12px;font-weight:800;font-size:clamp(20px,6vw,38px);background:rgba(255,255,255,.07);color:#fff}
+.t.nw{animation:pop .2s ease-out}@keyframes pop{from{transform:scale(.3);opacity:0}}
+</style></head><body>
+<div class="wrap"><div class="hud"><div class="box">Очки<b id="sc">0</b></div><div class="box">Рекорд<b id="bs">0</b></div><button onclick="init()">Новая игра</button><button onclick="undo()">Отменить ход</button></div>
+<div id="b"></div><div class="hint">Стрелки / WASD или свайп. Соединяй одинаковые числа — собери 2048!</div></div>
+<script src="common.js"></script>
+<script>
+gbg(1);const $=i=>document.getElementById(i);
+let G,sc=0,best=+localStorage.getItem('g20481')||0,prev=null,over=0,won=0,nw=[-1,-1];
+function init(){G=Array.from({length:4},()=>[0,0,0,0]);sc=0;over=0;won=0;prev=null;add();add();render()}
+function add(){const e=[];G.forEach((r,y)=>r.forEach((v,x)=>{if(!v)e.push([x,y])}));if(!e.length)return;const [x,y]=e[Math.random()*e.length|0];G[y][x]=Math.random()<.9?2:4;nw=[x,y]}
+function slide(row){const a=row.filter(v=>v),out=[];let gain=0;for(let i=0;i<a.length;i++){if(a[i]==a[i+1]){out.push(a[i]*2);gain+=a[i]*2;i++}else out.push(a[i])}while(out.length<4)out.push(0);return[out,gain]}
+function can(){for(let y=0;y<4;y++)for(let x=0;x<4;x++){if(!G[y][x])return 1;if(x<3&&G[y][x]==G[y][x+1])return 1;if(y<3&&G[y][x]==G[y+1][x])return 1}return 0}
+function move(d){if(over)return;const old=JSON.stringify(G),snap={G:G.map(r=>[...r]),sc};let gn=0;
+for(let i=0;i<4;i++){const line=[];for(let j=0;j<4;j++)line.push(d==0?G[i][j]:d==2?G[i][3-j]:d==1?G[j][i]:G[3-j][i]);const [o,g2]=slide(line);gn+=g2;
+for(let j=0;j<4;j++){const v=o[j];if(d==0)G[i][j]=v;else if(d==2)G[i][3-j]=v;else if(d==1)G[j][i]=v;else G[3-j][i]=v}}
+if(JSON.stringify(G)==old)return;prev=snap;sc+=gn;if(sc>best){best=sc;try{localStorage.setItem('g20481',best)}catch(e){}}add();
+if(!won&&G.some(r=>r.includes(2048))){won=1;msg('2048! Можно играть дальше')}if(!can()){over=1;msg('Ходов больше нет. Очки: '+sc)}bleep(300+gn%200,.06,'triangle',.05);render()}
+function undo(){if(!prev)return;G=prev.G;sc=prev.sc;prev=null;over=0;render()}
+function render(){$('sc').textContent=sc;$('bs').textContent=best;$('b').innerHTML=G.map((r,y)=>r.map((v,x)=>`<div class="t${nw[0]==x&&nw[1]==y?' nw':''}" style="${v?`background:hsl(${200+Math.log2(v)*28},70%,${Math.min(60,30+Math.log2(v)*3)}%);box-shadow:0 0 ${Math.min(24,Math.log2(v)*2)}px hsl(${200+Math.log2(v)*28},80%,60%);color:${v<8?'#111':'#fff'}`:''}">${v||''}</div>`).join('')).join('')}
+addEventListener('keydown',e=>{const m={ArrowLeft:0,KeyA:0,ArrowUp:1,KeyW:1,ArrowRight:2,KeyD:2,ArrowDown:3,KeyS:3}[e.code];if(m!==undefined){e.preventDefault();move(m)}});
+let tx=0,ty=0;addEventListener('touchstart',e=>{tx=e.touches[0].clientX;ty=e.touches[0].clientY});
+addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-tx,dy=e.changedTouches[0].clientY-ty;if(Math.max(Math.abs(dx),Math.abs(dy))<24)return;if(Math.abs(dx)>Math.abs(dy))move(dx>0?2:0);else move(dy>0?3:1)});
+init();
+</script></body></html>

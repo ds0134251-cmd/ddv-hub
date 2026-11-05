@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Видеопокер</title>
+<style>.hand{min-height:130px;display:flex;gap:12px;flex-wrap:wrap;justify-content:center;align-items:flex-end}.cw{display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer}.hl{font-size:11px;color:var(--c3);height:14px}
+#pay{border-collapse:collapse;font-size:13px}#pay td{padding:3px 14px;border-bottom:1px solid #fff2}#pay td:last-child{text-align:right;color:var(--c3)}#pay tr.w{background:var(--c3)}#pay tr.w td{color:#000}</style>
+</head><body>
+<div class="cm"><div class="felt">
+<table id="pay"></table>
+<div class="hand" id="hand"></div>
+<div class="big" id="res" style="font-size:22px">Нажми «Раздать»</div>
+<div class="row"><span class="hint">Ставка:</span><div class="row" id="chips"></div></div>
+<div class="hint" id="bt"></div>
+<button id="go" onclick="go()" style="font-weight:800;background:var(--c2);color:#000;padding:12px 44px">РАЗДАТЬ</button>
+<div class="hint">Видеопокер «Валеты или выше». Кликай по картам, чтобы оставить их, затем нажми «Обмен». Виртуальные монеты.</div></div></div>
+<script src="common.js"></script>
+<script>
+cinit(3);const $=i=>document.getElementById(i);
+let deck=[],H=[],hold=[0,0,0,0,0],ph=0,bet=50,won=-1;
+const NM=['Роял-флеш','Стрит-флеш','Каре','Фулл-хаус','Флеш','Стрит','Тройка','Две пары','Пара: валеты и выше'],MU=[800,50,25,9,6,4,3,2,1];
+function ev(h){const rs=h.map(c=>c[0]).sort((a,b)=>a-b),fl=h.every(c=>c[1]==h[0][1]),cnt={};rs.forEach(r=>cnt[r]=(cnt[r]||0)+1);
+const cv=Object.values(cnt).sort((a,b)=>b-a),u=[...new Set(rs)],st=u.length==5&&(u[4]-u[0]==4||u.join()=='0,9,10,11,12');
+if(st&&fl)return u.join()=='0,9,10,11,12'?0:1;if(cv[0]==4)return 2;if(cv[0]==3&&cv[1]==2)return 3;if(fl)return 4;if(st)return 5;if(cv[0]==3)return 6;if(cv[0]==2&&cv[1]==2)return 7;
+if(cv[0]==2){const p=+Object.keys(cnt).find(k=>cnt[k]==2);if(p==0||p>=10)return 8}return -1}
+function render(){$('hand').innerHTML=H.map((c,i)=>`<div class="cw" onclick="tg(${i})">${cardHtml(c,hold[i]&&ph==1?'hold':'')}<div class="hl">${hold[i]&&ph==1?'УДЕРЖАНО':''}</div></div>`).join('');
+$('pay').innerHTML=NM.map((n,i)=>`<tr class="${won==i?'w':''}"><td>${n}</td><td>×${MU[i]}</td></tr>`).join('');$('go').textContent=ph==0?'РАЗДАТЬ':'ОБМЕН';$('bt').textContent='Ставка: '+bet}
+function chips(){chipRow($('chips'),[10,50,100,500],v=>{if(ph==1)return;bet=v;chips();render()},bet)}
+function tg(i){if(ph!=1)return;hold[i]^=1;bleep(600,.04,'square',.04);render()}
+function go(){if(ph==0){if(CS.bal<bet){msg('Не хватает монет');return}cadd(-bet);deck=mkDeck();H=deck.splice(0,5);hold=[0,0,0,0,0];ph=1;won=-1;$('res').textContent='Выбери карты, которые оставить';bleep(500,.08,'triangle',.06)}
+else{H=H.map((c,i)=>hold[i]?c:deck.pop());ph=0;won=ev(H);if(won>=0){const w=bet*MU[won];cadd(w);$('res').textContent=`${NM[won]}! +${w}`;bleep(880,.3,'triangle',.1,400)}else{$('res').textContent='Нет комбинации';bleep(160,.3,'sawtooth',.06,-80)}}render()}
+chips();render();
+</script></body></html>

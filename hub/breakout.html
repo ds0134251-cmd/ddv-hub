@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Неон-арканоид</title><style>html,body{overflow:hidden;height:100%}#gc{position:fixed;inset:0;width:100%;height:100%}</style></head><body>
+<script src="common.js"></script><script>
+gbg(1);const cv=document.createElement('canvas');cv.id='gc';document.body.appendChild(cv);const g=cv.getContext('2d');
+const FW=800,FH=600;let W,H,sc,ox,oy;function rs(){W=cv.width=innerWidth;H=cv.height=innerHeight;sc=Math.min(W/FW,(H-20)/FH);ox=(W-FW*sc)/2;oy=(H-FH*sc)/2+8}addEventListener('resize',rs);rs();
+let pad={x:400,w:110},balls=[],bricks=[],pw=[],pt=[],lives=3,score=0,lv=1,st=0,best=+localStorage.getItem('brk1')||0,lt=0,wide=0,slow=0,keys={};
+function mk(){bricks=[];const rows=4+Math.min(4,lv);for(let r=0;r<rows;r++)for(let c=0;c<12;c++)bricks.push({x:20+c*63,y:60+r*26,w:58,h:20,hp:1+(r<2&&lv>1?1:0),r})}
+function nb(){balls=[{x:pad.x,y:FH-42,vx:0,vy:0,s:1}]}
+function reset(){lives=3;score=0;lv=1;pad.w=110;wide=0;slow=0;pw=[];pt=[];mk();nb();st=1}
+function launch(){for(const b of balls)if(b.s){b.s=0;b.vx=rnd(-140,140);b.vy=-(340+lv*25)}}
+function spark(x,y,r){for(let i=0;i<8;i++){const a=Math.random()*6.283,v=40+Math.random()*120;pt.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,l:.5,h:r*40+180})}}
+function act(){if(st!=1)reset();else launch()}
+addEventListener('keydown',e=>{keys[e.code]=1;if(/Arrow|Space/.test(e.code))e.preventDefault();if(e.code=='Space'&&!e.repeat)act()});addEventListener('keyup',e=>{delete keys[e.code]});
+addEventListener('mousemove',e=>{pad.x=(e.clientX-ox)/sc});addEventListener('mousedown',act);
+function upd(dt){const sl=slow>0?.6:1;slow-=dt;wide-=dt;if(wide<=0&&pad.w>110)pad.w=110;
+if(keys.ArrowLeft||keys.KeyA)pad.x-=520*dt;if(keys.ArrowRight||keys.KeyD)pad.x+=520*dt;pad.x=Math.max(pad.w/2,Math.min(FW-pad.w/2,pad.x));
+for(const b of balls){if(b.s){b.x=pad.x;b.y=FH-42;continue}
+ b.x+=b.vx*dt*sl;b.y+=b.vy*dt*sl;if(b.x<7){b.x=7;b.vx=Math.abs(b.vx)}if(b.x>FW-7){b.x=FW-7;b.vx=-Math.abs(b.vx)}if(b.y<7){b.y=7;b.vy=Math.abs(b.vy)}
+ if(b.vy>0&&b.y>FH-40&&b.y<FH-24&&Math.abs(b.x-pad.x)<pad.w/2+7){const k=(b.x-pad.x)/(pad.w/2),spd=Math.hypot(b.vx,b.vy);b.vx=k*spd*.8;b.vy=-Math.sqrt(Math.max(spd*spd-b.vx*b.vx,(spd*.5)**2));bleep(440,.04,'square',.05)}
+ for(const k of bricks){if(k.hp>0&&b.x>k.x-7&&b.x<k.x+k.w+7&&b.y>k.y-7&&b.y<k.y+k.h+7){const dx=Math.min(b.x-(k.x-7),(k.x+k.w+7)-b.x),dy=Math.min(b.y-(k.y-7),(k.y+k.h+7)-b.y);if(dx<dy)b.vx=-b.vx;else b.vy=-b.vy;k.hp--;score+=10*lv;bleep(500+k.r*60,.05,'triangle',.06);spark(b.x,b.y,k.r);if(k.hp<=0&&Math.random()<.16)pw.push({x:k.x+k.w/2,y:k.y,k:'WMLS'[Math.random()*4|0]});break}}}
+bricks=bricks.filter(k=>k.hp>0);balls=balls.filter(b=>b.y<FH+20);
+if(!balls.length){lives--;bleep(150,.4,'sawtooth',.08,-80);if(lives<=0){st=2;if(score>best){best=score;try{localStorage.setItem('brk1',best)}catch(e){}}}else nb()}
+for(const p of pw){p.y+=130*dt;if(p.y>FH-42&&p.y<FH-20&&Math.abs(p.x-pad.x)<pad.w/2+12){p.d=1;bleep(900,.15,'triangle',.08);if(p.k=='W'){pad.w=170;wide=14}else if(p.k=='L')lives++;else if(p.k=='S')slow=10;else if(balls.length){const b=balls[0];for(let i=0;i<2;i++)balls.push({x:b.x,y:b.y,vx:rnd(-200,200),vy:-300,s:b.s})}}}
+pw=pw.filter(p=>!p.d&&p.y<FH+20);
+if(!bricks.length){lv++;mk();nb();pw=[];bleep(880,.4,'triangle',.1,400)}}
+function loop(ts){const dt=Math.min(.05,(ts-lt)/1000||0);lt=ts;const [c1,c2,c3]=THEMES[U.th|0].c;if(st==1)upd(dt);
+for(const p of pt){p.x+=p.vx*dt;p.y+=p.vy*dt;p.l-=dt}pt=pt.filter(p=>p.l>0);
+g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,W,H);g.setTransform(sc,0,0,sc,ox,oy);
+g.fillStyle='rgba(5,3,15,.55)';g.fillRect(0,0,FW,FH);g.strokeStyle=al(c1,.8);g.shadowColor=c1;g.shadowBlur=18;g.lineWidth=3;g.strokeRect(0,0,FW,FH);g.shadowBlur=0;
+for(const k of bricks){const c=`hsl(${k.r*40+180},85%,${k.hp>1?68:56}%)`;g.shadowColor=c;g.shadowBlur=8;g.fillStyle=c;g.fillRect(k.x,k.y,k.w,k.h)}g.shadowBlur=0;
+g.shadowColor=c2;g.shadowBlur=14;g.fillStyle=c2;g.beginPath();g.roundRect(pad.x-pad.w/2,FH-34,pad.w,12,6);g.fill();
+g.shadowColor='#fff';g.fillStyle='#fff';for(const b of balls){g.beginPath();g.arc(b.x,b.y,7,0,6.283);g.fill()}g.shadowBlur=0;
+for(const p of pw){g.fillStyle=c3;g.beginPath();g.arc(p.x,p.y,12,0,6.283);g.fill();g.fillStyle='#000';g.font='700 14px "Segoe UI",sans-serif';g.textAlign='center';g.fillText(p.k,p.x,p.y+5)}
+for(const p of pt){g.globalAlpha=Math.max(0,p.l/.5);g.fillStyle=`hsl(${p.h},90%,60%)`;g.fillRect(p.x,p.y,3,3)}g.globalAlpha=1;
+g.textAlign='left';g.fillStyle='#fff';g.font='700 18px "Segoe UI",sans-serif';g.fillText(`Очки ${score}`,14,26);g.textAlign='center';g.fillText(`Уровень ${lv}`,FW/2,26);g.textAlign='right';g.fillText(`Жизни ${'♥'.repeat(Math.max(0,lives))} · Рекорд ${best}`,FW-14,26);
+if(st!=1){g.fillStyle='rgba(0,0,0,.55)';g.fillRect(0,0,FW,FH);g.textAlign='center';g.fillStyle=c3;g.shadowColor=c3;g.shadowBlur=18;g.font='800 44px "Segoe UI",sans-serif';g.fillText(st==0?'НЕОН-АРКАНОИД':'КОНЕЦ · '+score,FW/2,FH/2-10);g.shadowBlur=0;g.font='16px "Segoe UI",sans-serif';g.fillStyle='#fff';g.fillText('Мышь / ←→ — платформа · клик или Пробел — запуск · W удлинить, M мульти, L жизнь, S замедление',FW/2,FH/2+30)}
+requestAnimationFrame(loop)}
+requestAnimationFrame(loop);
+</script></body></html>

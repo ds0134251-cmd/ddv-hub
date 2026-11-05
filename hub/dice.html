@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Кости</title>
+<style>#num{font-size:84px;font-weight:800;color:var(--c3);text-shadow:0 0 30px var(--c3);font-variant-numeric:tabular-nums}
+input[type=range]{width:min(92%,540px);accent-color:var(--c2);height:28px}#hist span{padding:3px 10px;border-radius:8px;font-size:13px;font-weight:700}</style>
+</head><body>
+<div class="cm"><div class="felt">
+<div id="num">50.00</div>
+<div class="row"><button id="bl" class="sel" onclick="mode(0)">Меньше</button><button id="bm" onclick="mode(1)">Больше</button></div>
+<input type="range" id="th" min="2" max="98" step="1" value="50" oninput="upd()">
+<div class="hint" id="info"></div>
+<div class="row"><span class="hint">Ставка:</span><div class="row" id="chips"></div></div>
+<div class="hint" id="bt"></div>
+<button id="go" onclick="roll()" style="font-weight:800;background:var(--c2);color:#000;padding:12px 44px">БРОСИТЬ</button>
+<div class="big" id="res"></div><div class="row" id="hist"></div>
+<div class="hint">Число от 0.00 до 99.99. Чем меньше шанс — тем выше множитель. Виртуальные монеты.</div></div></div>
+<script src="common.js"></script>
+<script>
+cinit(4);const $=i=>document.getElementById(i);
+let bet=50,md=0,busy=0,hist=[];
+const th=()=>+$('th').value,ch=()=>md?100-th():th(),mul=()=>98/ch();
+function upd(){$('info').innerHTML=`Выигрыш, если выпадет ${md?'больше':'меньше'} <b>${th()}</b> · шанс <b>${ch()}%</b> · множитель <b>×${mul().toFixed(2)}</b> · выплата <b>${Math.floor(bet*mul())}</b>`;$('bt').textContent='Ставка: '+bet}
+function mode(m){md=m;$('bl').classList.toggle('sel',m==0);$('bm').classList.toggle('sel',m==1);upd()}
+function chips(){chipRow($('chips'),[10,50,100,500,1000],v=>{bet=v;chips();upd()},bet)}
+function roll(){if(busy)return;if(CS.bal<bet){msg('Не хватает монет');return}cadd(-bet);busy=1;$('go').disabled=true;$('res').textContent='';
+const r=Math.floor(Math.random()*10000)/100;let i=0;const iv=setInterval(()=>{$('num').textContent=(Math.random()*100).toFixed(2);bleep(300+Math.random()*300,.03,'square',.03);
+if(++i>14){clearInterval(iv);$('num').textContent=r.toFixed(2);const w=md?r>th():r<th(),pay=w?Math.floor(bet*mul()):0;if(w){cadd(pay);$('res').textContent='Победа! +'+(pay-bet);bleep(880,.3,'triangle',.1,400)}else{$('res').textContent='Не повезло';bleep(160,.3,'sawtooth',.06,-80)}
+hist.unshift([r,w]);hist=hist.slice(0,12);$('hist').innerHTML=hist.map(h=>`<span style="background:${h[1]?'#0a8a3a':'#8a1230'}">${h[0].toFixed(2)}</span>`).join('');busy=0;$('go').disabled=false}},60)}
+chips();upd();
+</script></body></html>

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Неон-захватчики</title><style>html,body{overflow:hidden;height:100%}#gc{position:fixed;inset:0;width:100%;height:100%}</style></head><body>
+<script src="common.js"></script><script>
+const ALPHA=al;
+gbg(1);const cv=document.createElement('canvas');cv.id='gc';document.body.appendChild(cv);const g=cv.getContext('2d');
+const FW=800,FH=600;let W,H,sc,ox,oy;function rs(){W=cv.width=innerWidth;H=cv.height=innerHeight;sc=Math.min(W/FW,(H-20)/FH);ox=(W-FW*sc)/2;oy=(H-FH*sc)/2+8}addEventListener('resize',rs);rs();
+let ship={x:400},bul=[],aln=[],ab=[],pt=[],dir=1,stepT=0,lives=3,score=0,wave=1,st=0,cd=0,best=+localStorage.getItem('inv1')||0,lt=0,keys={},inv=0,ufo=null,ufoT=15,ph=0;
+function mkWave(){aln=[];for(let r=0;r<5;r++)for(let c=0;c<10;c++)aln.push({x:110+c*54,y:70+r*44,r});dir=1;ab=[];bul=[]}
+function reset(){lives=3;score=0;wave=1;ship.x=400;inv=0;ufo=null;pt=[];mkWave();st=1}
+function spark(x,y,r){for(let i=0;i<14;i++){const a=Math.random()*6.283,v=40+Math.random()*160;pt.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,l:.6,h:r*50+150})}}
+function over(){st=2;if(score>best){best=score;try{localStorage.setItem('inv1',best)}catch(e){}}}
+addEventListener('keydown',e=>{keys[e.code]=1;if(/Arrow|Space/.test(e.code))e.preventDefault();if(e.code=='Space'&&st!=1)reset()});addEventListener('keyup',e=>{delete keys[e.code]});
+function upd(dt){if(keys.ArrowLeft||keys.KeyA)ship.x-=360*dt;if(keys.ArrowRight||keys.KeyD)ship.x+=360*dt;ship.x=Math.max(30,Math.min(FW-30,ship.x));cd-=dt;inv-=dt;
+if(keys.Space&&cd<=0){bul.push({x:ship.x,y:FH-70});cd=.35;bleep(800,.05,'square',.04,-300)}
+for(const b of bul)b.y-=560*dt;bul=bul.filter(b=>b.y>-10);
+stepT-=dt;if(stepT<=0){stepT=Math.max(.05,.65-wave*.04-(50-aln.length)*.011);ph^=1;let edge=0;for(const a of aln){a.x+=dir*14;if(a.x<30||a.x>FW-30)edge=1}if(edge){dir=-dir;for(const a of aln){a.x+=dir*14;a.y+=18}}}
+if(aln.length&&Math.random()<dt*(.6+wave*.15)){const c=aln[Math.random()*aln.length|0];ab.push({x:c.x,y:c.y+14})}
+for(const b of ab)b.y+=(230+wave*10)*dt;ab=ab.filter(b=>b.y<FH+10);
+ufoT-=dt;if(ufoT<=0&&!ufo){ufo={x:-30,v:150};ufoT=18+Math.random()*10}if(ufo){ufo.x+=ufo.v*dt;if(ufo.x>FW+40)ufo=null}
+for(const b of bul){for(const a of aln){if(!a.d&&Math.abs(a.x-b.x)<20&&Math.abs(a.y-b.y)<16){a.d=1;b.y=-99;score+=(5-a.r)*10;spark(a.x,a.y,a.r);bleep(300+a.r*60,.08,'square',.05,-120)}}
+ if(ufo&&Math.abs(ufo.x-b.x)<26&&Math.abs(40-b.y)<14){score+=100+Math.floor(Math.random()*3)*100;spark(ufo.x,40,2);b.y=-99;ufo=null;bleep(900,.3,'triangle',.1,300)}}
+aln=aln.filter(a=>!a.d);
+for(const b of ab){if(inv<=0&&Math.abs(b.x-ship.x)<24&&b.y>FH-80&&b.y<FH-40){b.y=999;lives--;inv=1.5;spark(ship.x,FH-60,0);bleep(120,.4,'sawtooth',.1,-80);if(lives<=0){over();return}}}
+if(aln.some(a=>a.y>FH-100)){over();return}
+if(!aln.length){wave++;mkWave();bleep(880,.4,'triangle',.1,400)}}
+function loop(ts){const dt=Math.min(.05,(ts-lt)/1000||0);lt=ts;const [c1,c2,c3]=THEMES[U.th|0].c;if(st==1)upd(dt);
+for(const p of pt){p.x+=p.vx*dt;p.y+=p.vy*dt;p.l-=dt}pt=pt.filter(p=>p.l>0);
+g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,W,H);g.setTransform(sc,0,0,sc,ox,oy);
+g.fillStyle='rgba(5,3,15,.55)';g.fillRect(0,0,FW,FH);g.strokeStyle=al2(c1);g.shadowColor=c1;g.shadowBlur=18;g.lineWidth=3;g.strokeRect(0,0,FW,FH);g.shadowBlur=0;
+for(const a of aln){const c=`hsl(${a.r*50+150},85%,60%)`;g.shadowColor=c;g.shadowBlur=10;g.fillStyle=c;g.beginPath();g.roundRect(a.x-16,a.y-10,32,20,6);g.fill();g.fillStyle='#07040f';g.fillRect(a.x-9,a.y-4,5,5);g.fillRect(a.x+4,a.y-4,5,5);g.fillStyle=c;g.fillRect(a.x-14+(ph?4:0),a.y+10,5,6);g.fillRect(a.x+9-(ph?4:0),a.y+10,5,6)}g.shadowBlur=0;
+if(ufo){g.shadowColor=c3;g.shadowBlur=14;g.fillStyle=c3;g.beginPath();g.ellipse(ufo.x,40,22,9,0,0,6.283);g.fill();g.shadowBlur=0}
+if(inv<=0||Math.sin(ts/50)>0){g.shadowColor=c1;g.shadowBlur=14;g.fillStyle=c1;g.beginPath();g.moveTo(ship.x,FH-68);g.lineTo(ship.x+22,FH-44);g.lineTo(ship.x-22,FH-44);g.closePath();g.fill();g.shadowBlur=0}
+g.fillStyle='#fff';for(const b of bul)g.fillRect(b.x-2,b.y-10,4,12);g.fillStyle=c2;for(const b of ab)g.fillRect(b.x-2,b.y,4,12);
+for(const p of pt){g.globalAlpha=Math.max(0,p.l/.6);g.fillStyle=`hsl(${p.h},90%,60%)`;g.fillRect(p.x,p.y,3,3)}g.globalAlpha=1;
+g.textAlign='left';g.fillStyle='#fff';g.font='700 18px "Segoe UI",sans-serif';g.fillText(`Очки ${score}`,14,26);g.textAlign='center';g.fillText(`Волна ${wave}`,FW/2,26);g.textAlign='right';g.fillText(`Жизни ${'♥'.repeat(Math.max(0,lives))} · Рекорд ${best}`,FW-14,26);
+if(st!=1){g.fillStyle='rgba(0,0,0,.55)';g.fillRect(0,0,FW,FH);g.textAlign='center';g.fillStyle=c3;g.shadowColor=c3;g.shadowBlur=18;g.font='800 44px "Segoe UI",sans-serif';g.fillText(st==0?'НЕОН-ЗАХВАТЧИКИ':'КОНЕЦ · '+score,FW/2,FH/2-10);g.shadowBlur=0;g.font='16px "Segoe UI",sans-serif';g.fillStyle='#fff';g.fillText('←→ / A D — движение · Пробел — огонь (Пробел — старт)',FW/2,FH/2+30)}
+requestAnimationFrame(loop)}
+function al2(c){return ALPHA(c,.8)}
+requestAnimationFrame(loop);
+</script></body></html>

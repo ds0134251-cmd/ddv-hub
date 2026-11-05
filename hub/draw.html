@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Неон-рисовалка</title>
+<style>html,body{overflow:hidden;height:100%}#gc{position:fixed;inset:0;width:100%;height:100%;cursor:crosshair;touch-action:none}
+#pnl{position:fixed;top:12px;right:12px;z-index:6;display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:16px;background:rgba(5,3,15,.7);backdrop-filter:blur(8px);border:1px solid var(--c1);max-width:260px}.hint{text-align:left}</style></head><body>
+<div id="pnl"><div class="hint">Лучи симметрии</div><div class="row" id="nn"></div><div class="hint">Толщина кисти</div><input type="range" min="1" max="14" value="3" oninput="size=+this.value" style="accent-color:var(--c2)">
+<div class="row"><button id="bf" onclick="fade=!fade;ui()">Затухание</button><button id="bg2" onclick="gl=!gl;ui()">Свечение</button></div><button onclick="g.clearRect(0,0,W,H)">Очистить</button></div>
+<script src="common.js"></script><script>
+gbg(1);const $=i=>document.getElementById(i);
+const cv=document.createElement('canvas');cv.id='gc';document.body.appendChild(cv);const g=cv.getContext('2d');
+let W,H;function rs(){W=cv.width=innerWidth;H=cv.height=innerHeight}addEventListener('resize',rs);rs();
+let down=0,lx=0,ly=0,hue=0,N=6,size=3,fade=0,gl=1;
+function ui(){$('nn').innerHTML=[1,2,4,6,8,12].map(n=>`<button class="${n==N?'sel':''}" onclick="N=${n};ui()">${n}</button>`).join('');$('bf').classList.toggle('sel',!!fade);$('bg2').classList.toggle('sel',!!gl)}
+function seg(x0,y0,x1,y1){const cx=W/2,cy=H/2;g.strokeStyle=`hsl(${hue},100%,60%)`;g.lineWidth=size;g.lineCap='round';g.shadowColor=g.strokeStyle;g.shadowBlur=gl?14:0;
+for(let k=0;k<N;k++){const a=k*6.283/N,c=Math.cos(a),s=Math.sin(a);for(const m of [1,-1]){const f=(x,y)=>{const dx=(x-cx)*m,dy=y-cy;return[cx+dx*c-dy*s,cy+dx*s+dy*c]},p=f(x0,y0),q=f(x1,y1);g.beginPath();g.moveTo(p[0],p[1]);g.lineTo(q[0],q[1]);g.stroke()}}}
+cv.onpointerdown=e=>{down=1;lx=e.clientX;ly=e.clientY};addEventListener('pointerup',()=>{down=0});
+cv.onpointermove=e=>{if(!down)return;seg(lx,ly,e.clientX,e.clientY);lx=e.clientX;ly=e.clientY;hue=(hue+2)%360};
+function loop(){if(fade){g.globalCompositeOperation='destination-out';g.fillStyle='rgba(0,0,0,.04)';g.fillRect(0,0,W,H);g.globalCompositeOperation='source-over'}requestAnimationFrame(loop)}
+ui();requestAnimationFrame(loop);
+</script></body></html>

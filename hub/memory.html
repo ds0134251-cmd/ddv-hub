@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Память</title>
+<style>.wrap{display:flex;flex-direction:column;align-items:center;gap:12px;padding:70px 12px 24px}.hud{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center}.box{padding:6px 16px;border-radius:12px;background:rgba(10,6,28,.7);border:1px solid var(--c1);text-align:center;min-width:80px}.box b{color:var(--c3);font-size:20px}
+#b{display:grid;gap:8px}.mc{width:70px;height:70px;perspective:600px;cursor:pointer}.mc.s{width:58px;height:58px}.mi{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform .4s}.mc.o .mi,.mc.m .mi{transform:rotateY(180deg)}
+.k,.f{position:absolute;inset:0;border-radius:12px;display:grid;place-items:center;backface-visibility:hidden}.k{background:linear-gradient(135deg,var(--c1),var(--c2));border:2px solid #fff4;font-size:24px}.f{transform:rotateY(180deg);background:rgba(10,6,28,.88);border:2px solid var(--c3);font-size:34px}.mc.s .f{font-size:28px}.mc.m .f{box-shadow:0 0 16px var(--c3)}</style></head><body>
+<div class="wrap"><div class="hud"><div class="row" id="lv"></div><div class="box">Ходы<br><b id="mv">0</b></div><div class="box">Время<br><b id="tm">0</b></div><div class="box">Рекорд<br><b id="bs">—</b></div><button onclick="init()">Заново</button></div><div id="b"></div><div class="big" id="res"></div><div class="hint">Открывай по две карточки и находи пары.</div></div>
+<script src="common.js"></script><script>
+gbg(1);const $=i=>document.getElementById(i);
+const EM=['🍎','🚀','🎧','🌙','🐙','⚡','🎲','🔮','🦊','🍄','🎸','🧊','🪐','🐝','🍩','🎯','🌵','🛸'],LV=[[4,4,'4×4'],[4,5,'4×5'],[6,6,'6×6']];
+let lv=0,cards=[],open=[],lock=0,moves=0,found=0,tm=0,iv=0,best={};try{best=JSON.parse(localStorage.getItem('mem1'))||{}}catch(e){}
+function lvls(){$('lv').innerHTML=LV.map((l,i)=>`<button class="${i==lv?'sel':''}" onclick="lv=${i};init()">${l[2]}</button>`).join('')}
+function init(){const [r,c]=LV[lv],n=r*c/2,em=EM.slice().sort(()=>Math.random()-.5).slice(0,n);cards=[...em,...em].sort(()=>Math.random()-.5).map(e=>({e,o:0,m:0}));open=[];lock=0;moves=0;found=0;clearInterval(iv);iv=0;tm=0;$('tm').textContent='0';$('mv').textContent='0';$('res').textContent='';lvls();draw()}
+function draw(){const c=LV[lv][1];$('b').style.gridTemplateColumns=`repeat(${c},${lv==2?58:70}px)`;$('b').innerHTML=cards.map((k,i)=>`<div class="mc${lv==2?' s':''}${k.o?' o':''}${k.m?' m':''}" data-i="${i}"><div class="mi"><div class="k">?</div><div class="f">${k.e}</div></div></div>`).join('');$('bs').textContent=best[lv]?best[lv]+' ходов':'—'}
+$('b').onclick=e=>{const c=e.target.closest('[data-i]');if(!c||lock)return;const i=+c.dataset.i,k=cards[i];if(k.o||k.m)return;if(!iv)iv=setInterval(()=>{tm++;$('tm').textContent=tm},1000);k.o=1;open.push(i);bleep(500+i*10,.05,'triangle',.06);draw();
+if(open.length==2){moves++;$('mv').textContent=moves;const [a,b]=open;
+ if(cards[a].e==cards[b].e){cards[a].m=cards[b].m=1;cards[a].o=cards[b].o=0;open=[];found++;bleep(880,.15,'triangle',.1);draw();
+  if(found==cards.length/2){clearInterval(iv);$('res').textContent=`🏆 Все пары за ${moves} ходов и ${tm} с!`;if(!best[lv]||moves<best[lv]){best[lv]=moves;try{localStorage.setItem('mem1',JSON.stringify(best))}catch(e){}}draw()}}
+ else{lock=1;setTimeout(()=>{cards[a].o=cards[b].o=0;open=[];lock=0;draw()},750)}}};
+init();
+</script></body></html>
