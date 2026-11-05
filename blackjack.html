@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Блэкджек</title>
+<style>.hand{min-height:112px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;align-items:center}.act button{min-width:110px;font-weight:700}</style>
+</head><body>
+<div class="cm"><div class="felt">
+<div class="hint">ДИЛЕР</div><div class="hand" id="dh"></div><div class="big" id="dt"></div>
+<div class="big" id="res" style="font-size:24px"></div>
+<div class="big" id="pt"></div><div class="hand" id="ph"></div><div class="hint">ТЫ</div>
+<div class="row"><span class="hint">Добавить к ставке:</span><div class="row" id="chips"></div></div>
+<div class="hint" id="bt"></div>
+<div class="row act"><button id="b0" onclick="deal()" style="background:var(--c2);color:#000">РАЗДАТЬ</button><button id="b1" onclick="hit()">Взять</button><button id="b2" onclick="stand()">Хватит</button><button id="b3" onclick="dbl()">Удвоить</button><button id="b4" onclick="clr()">Сбросить ставку</button></div>
+<div class="hint">Блэкджек платит 3:2 · дилер берёт карты до 17 · виртуальные монеты</div></div></div>
+<script src="common.js"></script>
+<script>
+cinit(2);const $=i=>document.getElementById(i);
+let deck=[],P=[],D=[],bet=0,ph=0,bz=0,dbd=0; // ph: 0 ставка, 1 игра, 2 раунд окончен
+const val=h=>{let t=0,a=0;for(const c of h){t+=c[0]==0?11:Math.min(10,c[0]+1);if(c[0]==0)a++}while(t>21&&a){t-=10;a--}return t};
+function draw(){if(deck.length<12)deck=mkDeck();return deck.pop()}
+function render(){const hide=ph==1;$('dh').innerHTML=D.map((c,i)=>cardHtml(c,hide&&i==1?'back':'')).join('');$('ph').innerHTML=P.map(c=>cardHtml(c)).join('');
+$('dt').textContent=D.length?'Дилер: '+(hide?val([D[0]])+' + ?':val(D)):'';$('pt').textContent=P.length?'Ты: '+val(P):'';$('bt').textContent='Ставка: '+bet;
+$('b0').disabled=ph==1||bz||!bet;$('b1').disabled=$('b2').disabled=ph!=1||bz;$('b3').disabled=!(ph==1&&!bz&&P.length==2&&CS.bal>=bet);$('b4').disabled=ph==1||bz}
+function chips(){chipRow($('chips'),[10,50,100,500,1000],v=>{if(ph==1||bz)return;if(ph==2){ph=0;P=[];D=[];$('res').textContent='';bet=0}if(CS.bal-bet<v){msg('Не хватает монет');return}bet+=v;bleep(600,.05,'square',.05);render()})}
+function clr(){if(ph==1||bz)return;bet=0;P=[];D=[];ph=0;$('res').textContent='';render()}
+function deal(){if(ph==1||bz||!bet)return;if(CS.bal<bet){msg('Не хватает монет');bet=Math.min(bet,CS.bal);render();return}
+cadd(-bet);P=[draw(),draw()];D=[draw(),draw()];ph=1;dbd=0;$('res').textContent='';bleep(500,.06,'square',.05);render();if(val(P)==21||val(D)==21){bz=1;setTimeout(finish,600)}}
+function hit(){if(ph!=1||bz)return;P.push(draw());bleep(520,.05,'square',.05);render();if(val(P)>21)finish();else if(val(P)==21)stand()}
+function stand(){if(ph!=1||bz)return;ph=2;bz=1;render();(function st(){if(val(D)<17){D.push(draw());bleep(440,.05,'square',.05);render();setTimeout(st,600)}else finish()})()}
+function dbl(){if(ph!=1||bz||P.length!=2||CS.bal<bet)return;cadd(-bet);bet*=2;dbd=1;P.push(draw());render();if(val(P)>21)finish();else stand()}
+function finish(){ph=2;bz=0;const p=val(P),d=val(D),pbj=P.length==2&&p==21,dbj=D.length==2&&d==21;let ret=0,t='';
+if(pbj&&dbj){ret=bet;t='Ничья: у обоих блэкджек'}else if(pbj){ret=bet*2.5;t='БЛЭКДЖЕК! Выплата 3:2'}else if(dbj){t='У дилера блэкджек'}else if(p>21){t='Перебор — проигрыш'}
+else if(d>21){ret=bet*2;t='Дилер перебрал — победа!'}else if(p>d){ret=bet*2;t='Победа!'}else if(p==d){ret=bet;t='Ничья — ставка возвращена'}else t='Дилер выигрывает';
+ret=Math.floor(ret);if(ret)cadd(ret);$('res').textContent=t+(ret>bet?' · +'+(ret-bet):'');if(ret>bet){bleep(660,.15,'triangle',.1);setTimeout(()=>bleep(990,.25,'triangle',.1),150)}else if(!ret)bleep(160,.3,'sawtooth',.06,-80);
+if(dbd){bet=bet/2;dbd=0}if(bet>CS.bal)bet=CS.bal;render()}
+chips();render();
+</script></body></html>

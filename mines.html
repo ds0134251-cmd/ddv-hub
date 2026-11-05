@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Сапёр</title>
+<style>
+.wrap{display:flex;flex-direction:column;align-items:center;gap:12px;padding:70px 12px 24px}
+.hud{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center}.box{padding:6px 16px;border-radius:12px;background:rgba(10,6,28,.7);border:1px solid var(--c1);min-width:90px;text-align:center}.box b{color:var(--c3);font-size:20px}
+#b{display:grid;gap:2px;padding:10px;border-radius:14px;background:rgba(10,6,28,.75);border:2px solid var(--c1);box-shadow:0 0 26px var(--c1);overflow:auto;max-width:98vw}
+.c{width:32px;height:32px;display:grid;place-items:center;border-radius:6px;font-weight:800;font-size:16px;cursor:pointer;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.18)}
+.c:hover{filter:brightness(1.4)}.c.o{background:rgba(0,0,0,.45);cursor:default;border-color:transparent}.c.m{background:#a01030}.c.x{background:#ff2040}
+.n1{color:#4da6ff}.n2{color:#4dff88}.n3{color:#ff6b81}.n4{color:#b04bff}.n5{color:#ff9a2b}.n6{color:#4ee1ff}.n7{color:#fff}.n8{color:#aaa}
+</style></head><body>
+<div class="wrap"><div class="hud"><div class="row" id="lv"></div><div class="box">Мины<br><b id="mc">0</b></div><div class="box">Время<br><b id="tm">0</b></div><div class="box">Рекорд<br><b id="bs">—</b></div><button onclick="init()">Заново</button></div>
+<div id="b"></div><div class="big" id="st"></div><div class="hint">Левый клик — открыть, правый клик (или долгое нажатие) — флажок. Первый ход всегда безопасный.</div></div>
+<script src="common.js"></script>
+<script>
+gbg(1);const $=i=>document.getElementById(i);
+const LV=[[9,9,10,'Новичок'],[12,12,24,'Любитель'],[16,16,40,'Эксперт']];
+let lv=0,R,C,M,B,rev,flg,over,first,tm,iv,left,bt={};try{bt=JSON.parse(localStorage.getItem('mn1'))||{}}catch(e){}
+function lvls(){$('lv').innerHTML=LV.map((l,i)=>`<button class="${i==lv?'sel':''}" onclick="lv=${i};init()">${l[3]}</button>`).join('')}
+function init(){[R,C,M]=LV[lv];B=Array.from({length:R},()=>Array(C).fill(0));rev=Array.from({length:R},()=>Array(C).fill(0));flg=Array.from({length:R},()=>Array(C).fill(0));over=0;first=1;tm=0;left=M;clearInterval(iv);$('tm').textContent='0';$('st').textContent='';lvls();draw()}
+function place(sx,sy){let n=0;while(n<M){const x=Math.random()*C|0,y=Math.random()*R|0;if(B[y][x]==9||(Math.abs(x-sx)<=1&&Math.abs(y-sy)<=1))continue;B[y][x]=9;n++}
+for(let y=0;y<R;y++)for(let x=0;x<C;x++){if(B[y][x]==9)continue;let c=0;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++)if(B[y+dy]&&B[y+dy][x+dx]==9)c++;B[y][x]=c}}
+function open(x,y){if(x<0||y<0||x>=C||y>=R||rev[y][x]||flg[y][x])return;rev[y][x]=1;if(B[y][x]==0)for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++)open(x+dx,y+dy)}
+function draw(){const b=$('b');b.style.gridTemplateColumns=`repeat(${C},32px)`;let h='';
+for(let y=0;y<R;y++)for(let x=0;x<C;x++){const v=B[y][x];let cls='c',t='';if(rev[y][x]){cls+=' o';if(v==9){cls+=' x';t='💥'}else if(v){cls+=' n'+v;t=v}}else if(over&&v==9&&!flg[y][x]){cls+=' o m';t='💣'}else if(flg[y][x])t='🚩';h+=`<div class="${cls}" data-x="${x}" data-y="${y}">${t}</div>`}
+b.innerHTML=h;$('mc').textContent=left;const k=bt[lv];$('bs').textContent=k?k+' с':'—'}
+function cell(e){const c=e.target.closest('[data-x]');return c?[+c.dataset.x,+c.dataset.y]:null}
+function lose(){over=1;clearInterval(iv);$('st').textContent='💥 Взрыв! Попробуй ещё раз';bleep(120,.6,'sawtooth',.12,-80)}
+function win(){over=1;clearInterval(iv);$('st').textContent=`🏆 Победа за ${tm} с!`;if(!bt[lv]||tm<bt[lv]){bt[lv]=tm;try{localStorage.setItem('mn1',JSON.stringify(bt))}catch(e){}}bleep(660,.3,'triangle',.1);setTimeout(()=>bleep(990,.4,'triangle',.1),200)}
+function check(){let n=0;for(let y=0;y<R;y++)for(let x=0;x<C;x++)if(rev[y][x]&&B[y][x]!=9)n++;if(n==R*C-M)win()}
+$('b').onclick=e=>{const p=cell(e);if(!p||over)return;const [x,y]=p;if(flg[y][x]||rev[y][x])return;
+if(first){first=0;place(x,y);iv=setInterval(()=>{tm++;$('tm').textContent=tm},1000)}
+if(B[y][x]==9){rev[y][x]=1;lose()}else{open(x,y);bleep(500,.04,'square',.04);check()}draw()};
+$('b').oncontextmenu=e=>{e.preventDefault();const p=cell(e);if(!p||over)return;const [x,y]=p;if(rev[y][x])return;flg[y][x]^=1;left+=flg[y][x]?-1:1;bleep(380,.04,'triangle',.05);draw()};
+let lp=0;$('b').addEventListener('touchstart',e=>{lp=setTimeout(()=>{const p=cell(e);if(p&&!over&&!rev[p[1]][p[0]]){flg[p[1]][p[0]]^=1;left+=flg[p[1]][p[0]]?-1:1;draw()}lp=-1},450)});
+$('b').addEventListener('touchend',e=>{if(lp==-1){e.preventDefault()}clearTimeout(lp)});
+init();
+</script></body></html>

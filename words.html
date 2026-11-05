@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Слово</title>
+<style>.wrap{display:flex;flex-direction:column;align-items:center;gap:10px;padding:70px 12px 24px}.wr{display:flex;gap:6px;justify-content:center;margin:3px}
+.wc{width:52px;height:52px;display:grid;place-items:center;border:2px solid rgba(255,255,255,.25);border-radius:8px;font-size:26px;font-weight:800;text-transform:uppercase;background:rgba(10,6,28,.6)}
+.wc.t{border-color:var(--c1)}.wc.s0{background:#3a3a46;border-color:#3a3a46}.wc.s1{background:#c9a227;border-color:#c9a227}.wc.s2{background:#2e9e5b;border-color:#2e9e5b}
+.kk{padding:9px 10px;min-width:34px;text-transform:uppercase;font-weight:700}.kk.s0{background:#3a3a46}.kk.s1{background:#c9a227;color:#000}.kk.s2{background:#2e9e5b}</style></head><body>
+<div class="wrap"><div class="row"><button onclick="init(1)">Слово дня</button><button onclick="init(0)">Случайное слово</button></div><div class="big" id="res"></div><div id="bd"></div><div id="kb" style="display:flex;flex-direction:column;gap:6px"></div><div class="hint" id="st"></div><div class="hint">Угадай слово из 5 букв за 6 попыток. Зелёный — буква на месте, жёлтый — буква есть, но в другом месте.</div></div>
+<script src="common.js"></script><script>
+gbg(1);const $=i=>document.getElementById(i);
+const WL=['арбуз','башня','берег','ветер','время','глина','гроза','дождь','земля','игрок','книга','лампа','месяц','музей','народ','огонь','озеро','океан','песня','пират','поезд','рыбак','сосна','стена','танец','улица','шторм','мороз','букет','ворон','зебра','кошка','птица','слово','волна','лодка','трава','туман','закат','пламя','робот','ключи','крыша','пирог','сахар','чашка','шарик','школа','экран','север','банан','лимон','олень','акула','белка','ягода','орган','сыщик','жираф','тучка'];
+const KB=['йцукенгшщзхъ','фывапролджэ','ячсмитьбю'];
+let ans='',row=0,cur='',over=0,ks={},hist=[],ST={s:0,b:0,w:0,g:0};try{Object.assign(ST,JSON.parse(localStorage.getItem('wd1')))}catch(e){}
+function init(daily){ans=daily?WL[(Date.now()/864e5|0)%WL.length]:WL[Math.random()*WL.length|0];row=0;cur='';over=0;ks={};hist=[];$('res').textContent=daily?'Слово дня':'Случайное слово';draw()}
+function score(gs){const r=Array(5).fill(0),a=ans.split('');for(let i=0;i<5;i++)if(gs[i]==a[i]){r[i]=2;a[i]=null}for(let i=0;i<5;i++)if(!r[i]){const j=a.indexOf(gs[i]);if(j>=0){r[i]=1;a[j]=null}}return r}
+function draw(){let h='';for(let r=0;r<6;r++){h+='<div class="wr">';for(let c=0;c<5;c++){let t='',cl='';if(r<hist.length){t=hist[r].g[c];cl='s'+hist[r].r[c]}else if(r==row&&!over){t=cur[c]||'';if(t)cl='t'}h+=`<div class="wc ${cl}">${t}</div>`}h+='</div>'}
+$('bd').innerHTML=h;$('kb').innerHTML=KB.map(rw=>`<div class="row">${rw.split('').map(k=>`<button class="kk ${ks[k]!==undefined?'s'+ks[k]:''}" data-k="${k}">${k}</button>`).join('')}</div>`).join('')+'<div class="row"><button class="kk" data-k="Enter">Ввод</button><button class="kk" data-k="Back">⌫</button></div>';
+$('st').textContent=`Серия: ${ST.s} · Лучшая серия: ${ST.b} · Побед: ${ST.w} из ${ST.g}`}
+function fin(w){over=1;ST.g++;if(w){ST.w++;ST.s++;ST.b=Math.max(ST.b,ST.s);$('res').textContent='🎉 Верно! Слово: '+ans;bleep(880,.3,'triangle',.1)}else{ST.s=0;$('res').textContent='Слово было: '+ans;bleep(160,.4,'sawtooth',.08,-80)}try{localStorage.setItem('wd1',JSON.stringify(ST))}catch(e){}}
+function key(k){if(over)return;if(k=='Back'){cur=cur.slice(0,-1)}else if(k=='Enter'){if(cur.length<5){msg('Нужно 5 букв');return}const r=score(cur);hist.push({g:cur,r});for(let i=0;i<5;i++){const L=cur[i];ks[L]=Math.max(ks[L]===undefined?0:ks[L],r[i])}row++;bleep(500,.08,'triangle',.06);const ok=cur==ans;cur='';if(ok)fin(1);else if(row==6)fin(0)}else if(cur.length<5)cur+=k;draw()}
+$('kb').onclick=e=>{const b=e.target.closest('[data-k]');if(b)key(b.dataset.k)};
+addEventListener('keydown',e=>{if(e.key=='Enter')key('Enter');else if(e.key=='Backspace')key('Back');else{const L=e.key.toLowerCase().replace('ё','е');if(/^[а-я]$/.test(L))key(L)}});
+init(1);
+</script></body></html>

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Крестики-нолики</title>
+<style>.wrap{display:flex;flex-direction:column;align-items:center;gap:14px;padding:70px 16px}#b{display:grid;grid-template-columns:repeat(3,min(26vw,112px));gap:8px}
+.q{aspect-ratio:1;border-radius:14px;background:rgba(10,6,28,.7);border:2px solid var(--c1);display:grid;place-items:center;font-size:clamp(40px,12vw,68px);font-weight:800;cursor:pointer;transition:.15s}
+.q:hover{box-shadow:0 0 18px var(--c1)}.q.x{color:var(--c1);text-shadow:0 0 18px var(--c1)}.q.o{color:var(--c2);text-shadow:0 0 18px var(--c2)}.q.w{background:rgba(255,225,74,.25);border-color:var(--c3)}</style></head><body>
+<div class="wrap"><div class="hint">Сложность бота</div><div class="row" id="lv"></div><div id="b"></div><div class="big" id="res"></div><div class="hint" id="sc"></div><button onclick="init()">Новая партия</button></div>
+<script src="common.js"></script><script>
+gbg(1);const $=i=>document.getElementById(i);
+let B,over,lv=2,T={w:0,l:0,d:0};try{Object.assign(T,JSON.parse(localStorage.getItem('ttt1')))}catch(e){}
+const LN=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]],win=b=>{for(const l of LN)if(b[l[0]]&&b[l[0]]==b[l[1]]&&b[l[0]]==b[l[2]])return l;return null};
+function mm(b,p,d){const w=win(b);if(w)return{s:b[w[0]]==2?10-d:d-10};if(b.every(v=>v))return{s:0};let bs=p==2?-99:99,bi=-1;for(let i=0;i<9;i++)if(!b[i]){b[i]=p;const s=mm(b,3-p,d+1).s;b[i]=0;if(p==2?s>bs:s<bs){bs=s;bi=i}}return{s:bs,i:bi}}
+function lvls(){$('lv').innerHTML=['Лёгкий','Средний','Невозможный'].map((t,i)=>`<button class="${i==lv?'sel':''}" onclick="lv=${i};lvls();init()">${t}</button>`).join('')}
+function end(w){over=1;let r;if(w){if(B[w[0]]==1){T.w++;r='Ты победил! 🎉'}else{T.l++;r='Бот победил'}}else{T.d++;r='Ничья'}try{localStorage.setItem('ttt1',JSON.stringify(T))}catch(e){}$('res').textContent=r;bleep(w&&B[w[0]]==1?880:200,.3,'triangle',.1);draw(w)}
+function draw(w){$('b').innerHTML=B.map((v,i)=>`<div class="q ${v==1?'x':v==2?'o':''}${w&&w.includes(i)?' w':''}" data-i="${i}">${v==1?'✕':v==2?'◯':''}</div>`).join('');$('sc').textContent=`Победы: ${T.w} · Поражения: ${T.l} · Ничьи: ${T.d}`}
+function bot(){const e=[];B.forEach((v,i)=>{if(!v)e.push(i)});if(!e.length)return;const i=lv==0||(lv==1&&Math.random()<.45)?e[Math.random()*e.length|0]:mm(B,2,0).i;B[i]=2}
+$('b').onclick=e=>{const c=e.target.closest('[data-i]');if(!c||over)return;const i=+c.dataset.i;if(B[i])return;B[i]=1;bleep(600,.05,'square',.05);let w=win(B);if(w||B.every(v=>v)){end(w);return}bot();bleep(400,.05,'square',.05);w=win(B);if(w||B.every(v=>v)){end(w);return}draw()};
+function init(){B=Array(9).fill(0);over=0;$('res').textContent='';draw()}
+lvls();init();
+</script></body></html>

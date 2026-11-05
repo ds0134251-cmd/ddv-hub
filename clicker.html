@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Космо-ферма</title>
+<style>.wrap{display:flex;flex-direction:column;align-items:center;gap:10px;padding:70px 12px 30px;max-width:760px;margin:0 auto}
+#pl{font-size:130px;cursor:pointer;filter:drop-shadow(0 0 30px var(--c2));animation:pu 3s ease-in-out infinite;user-select:none}#pl:active{transform:scale(.93)}@keyframes pu{50%{transform:scale(1.05) rotate(3deg)}}
+.gi{display:grid;grid-template-columns:1fr auto;gap:6px 12px;align-items:center;width:100%;padding:10px 14px;border-radius:14px;background:rgba(10,6,28,.7);border:1px solid rgba(255,255,255,.15);margin-bottom:6px;text-align:left}.gi small{opacity:.7}
+.fl{position:fixed;pointer-events:none;color:var(--c3);font-weight:800;font-size:22px;animation:up .9s ease-out forwards;z-index:9;text-shadow:0 0 10px #000}@keyframes up{to{transform:translateY(-70px);opacity:0}}
+#cm{position:fixed;font-size:54px;cursor:pointer;z-index:8;animation:cm 12s linear forwards;filter:drop-shadow(0 0 16px var(--c3))}@keyframes cm{from{left:-80px;top:20%}to{left:105%;top:60%}}</style></head><body>
+<div class="wrap"><div class="big" id="en" style="font-size:34px"></div><div class="hint" id="ps"></div><div id="pl" onclick="clk(event)">🪐</div><div class="hint" id="cp"></div>
+<div class="row"><button id="u1" onclick="upg(1)"></button><button id="u2" onclick="upg(2)"></button><button onclick="if(confirm('Сбросить весь прогресс?')){localStorage.removeItem('clk1');location.reload()}">Сброс</button></div><div id="gen" style="width:100%"></div></div>
+<script src="common.js"></script><script>
+gbg(1);const $=i=>document.getElementById(i);
+const GN=[['Солнечная панель',15,.1],['Реактор',100,1],['Дрон-сборщик',1100,8],['Мини-звезда',12000,47],['Космоферма',130000,260],['Чёрная дыра',1.4e6,1400],['Квантовый двигатель',2e7,7800],['Галактика',3.3e8,44000]];
+let S={e:0,tot:0,cl:0,g:GN.map(()=>0),cu:0,mu:0,t:Date.now()};try{const v=JSON.parse(localStorage.getItem('clk1'));if(v)Object.assign(S,v)}catch(e){}
+S.g=GN.map((_,i)=>(S.g&&S.g[i])||0);
+const mult=()=>Math.pow(1.25,S.mu),cp=()=>Math.pow(1.6,S.cu),cps=()=>S.g.reduce((a,n,i)=>a+n*GN[i][2],0)*mult(),cost=i=>Math.ceil(GN[i][1]*Math.pow(1.15,S.g[i]));
+const fmt=n=>{if(n<1000)return n<10?n.toFixed(1):Math.floor(n)+'';const u=['K','M','B','T','Qa'];for(let i=0;i<u.length;i++)if(n<Math.pow(1000,i+2))return (n/Math.pow(1000,i+1)).toFixed(2)+u[i];return n.toExponential(2)};
+const c1=()=>Math.ceil(50*Math.pow(3,S.cu)),c2=()=>Math.ceil(5000*Math.pow(5,S.mu));
+function clk(e){const v=cp();S.e+=v;S.tot+=v;S.cl++;bleep(500+Math.random()*200,.04,'triangle',.04);const f=document.createElement('div');f.className='fl';f.textContent='+'+fmt(v);f.style.left=(e.clientX||400)+'px';f.style.top=(e.clientY||300)+'px';document.body.appendChild(f);setTimeout(()=>f.remove(),900);upd()}
+function buy(i){const c=cost(i);if(S.e>=c){S.e-=c;S.g[i]++;bleep(700,.1,'triangle',.07);render()}}
+function upg(k){const c=k==1?c1():c2();if(S.e>=c){S.e-=c;if(k==1)S.cu++;else S.mu++;bleep(900,.15,'triangle',.08);render()}}
+function upd(){$('en').textContent='⚡ '+fmt(S.e);$('ps').textContent=`+${fmt(cps())} в секунду · всего ${fmt(S.tot)}`;$('cp').textContent=`Сила клика: ${fmt(cp())} · кликов: ${S.cl}`;
+$('u1').textContent=`Усилить клик ×1.6 — ⚡ ${fmt(c1())}`;$('u2').textContent=`Усилитель ×1.25 (всё) — ⚡ ${fmt(c2())}`;$('u1').disabled=S.e<c1();$('u2').disabled=S.e<c2()}
+function render(){upd();$('gen').innerHTML=GN.map((g,i)=>`<div class="gi"><div><b>${g[0]}</b> ×${S.g[i]}<br><small>+${fmt(g[2]*mult())}/с каждый</small></div><button ${S.e<cost(i)?'disabled':''} onclick="buy(${i})">⚡ ${fmt(cost(i))}</button></div>`).join('')}
+const off=Math.min(8*3600,(Date.now()-S.t)/1000);if(off>60&&cps()>0){const gain=cps()*off*.5;S.e+=gain;S.tot+=gain;setTimeout(()=>msg('Пока тебя не было: +'+fmt(gain)+' энергии'),500)}
+setInterval(()=>{const g=cps()/10;S.e+=g;S.tot+=g;upd()},100);setInterval(render,600);
+setInterval(()=>{S.t=Date.now();try{localStorage.setItem('clk1',JSON.stringify(S))}catch(e){}},5000);
+setInterval(()=>{if(!document.getElementById('cm')&&Math.random()<.5){const c=document.createElement('div');c.id='cm';c.textContent='☄️';c.onclick=()=>{const b=Math.max(cp()*100,cps()*60);S.e+=b;S.tot+=b;bleep(1000,.3,'triangle',.1,400);msg('Комета! +'+fmt(b));c.remove()};document.body.appendChild(c);setTimeout(()=>c.remove(),12000)}},25000);
+render();
+</script></body></html>

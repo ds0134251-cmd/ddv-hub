@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Синтезатор</title>
+<style>.wrap{display:flex;flex-direction:column;align-items:center;gap:14px;padding:70px 12px 24px}.pn{position:relative;height:210px;width:max-content;display:flex;max-width:100%;overflow-x:auto}
+.wk{width:54px;height:210px;flex:none;background:linear-gradient(#fff,#ddd);border:1px solid #888;border-radius:0 0 8px 8px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;color:#444;font-size:11px;cursor:pointer}.wk.p{background:linear-gradient(var(--c1),#fff)}
+.bk{position:absolute;top:0;width:34px;height:128px;background:linear-gradient(#222,#000);border-radius:0 0 6px 6px;cursor:pointer;z-index:2}.bk.p{background:linear-gradient(var(--c2),#000)}</style></head><body>
+<div class="wrap"><h2>Синтезатор</h2><div class="pn" id="pn"></div>
+<div class="row" id="wf"></div><div class="row" id="oc"></div>
+<div class="row"><span class="hint">Громкость</span><input type="range" min="0" max="1" step=".05" value=".5" oninput="vol=+this.value" style="accent-color:var(--c2)"><button id="au" onclick="tauto()">▶ Авто-мелодия</button></div>
+<div class="hint">Играй мышью или клавишами A S D F G H J K L ; ' (белые) и W E T Y U O P (чёрные). «Авто-мелодия» играет спокойную пентатонику.</div></div>
+<script src="common.js"></script><script>
+gbg(1);const $=i=>document.getElementById(i);
+let AC,wf='triangle',oct=0,vol=.5,auto=0,aiv=0;
+const WS=[0,2,4,5,7,9,11,12,14,16,17,19,21,23,24],BS=[[1,0],[3,1],[6,3],[8,4],[10,5],[13,7],[15,8],[18,10],[20,11],[22,12]];
+const WK=['KeyA','KeyS','KeyD','KeyF','KeyG','KeyH','KeyJ','KeyK','KeyL','Semicolon','Quote'],BK={KeyW:1,KeyE:3,KeyT:6,KeyY:8,KeyU:10,KeyO:13,KeyP:15};
+function play(semi,el){AC=AC||new AudioContext();if(AC.state=='suspended')AC.resume();const f=261.63*2**((semi+12*oct)/12),t=AC.currentTime,o=AC.createOscillator(),g=AC.createGain(),fl=AC.createBiquadFilter();
+o.type=wf;o.frequency.value=f;fl.type='lowpass';fl.frequency.value=3200;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol*.4,t+.01);g.gain.exponentialRampToValueAtTime(.001,t+1.6);o.connect(fl);fl.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+1.7);
+if(el){el.classList.add('p');setTimeout(()=>el.classList.remove('p'),180)}}
+function build(){let h='';WS.forEach(s=>{h+=`<div class="wk" data-s="${s}"></div>`});BS.forEach(([s,i])=>{h+=`<div class="bk" data-s="${s}" style="left:${(i+1)*54-17}px"></div>`});$('pn').innerHTML=h;
+$('wf').innerHTML=[['sine','Синус'],['triangle','Треугольник'],['square','Квадрат'],['sawtooth','Пила']].map(([k,t])=>`<button class="${wf==k?'sel':''}" onclick="wf='${k}';build()">${t}</button>`).join('');
+$('oc').innerHTML=[-1,0,1].map(o=>`<button class="${oct==o?'sel':''}" onclick="oct=${o};build()">Октава ${o>0?'+':''}${o}</button>`).join('')}
+$('pn').onmousedown=e=>{const k=e.target.closest('[data-s]');if(k)play(+k.dataset.s,k)};
+const el=s=>document.querySelector?document.querySelector(`[data-s="${s}"]`):null;
+addEventListener('keydown',e=>{if(e.repeat)return;let s=null;const i=WK.indexOf(e.code);if(i>=0)s=WS[i];else if(BK[e.code]!==undefined)s=BK[e.code];if(s!==null)play(s,el(s))});
+function tauto(){auto=!auto;$('au').textContent=auto?'■ Остановить':'▶ Авто-мелодия';clearInterval(aiv);if(auto){const P=[0,2,4,7,9,12,14,16,19,21];let i=3;aiv=setInterval(()=>{if(Math.random()<.8){i=Math.max(0,Math.min(P.length-1,i+(Math.random()<.5?-1:1)*(1+(Math.random()*2|0))));play(P[i],el(P[i]))}},520)}}
+build();
+</script></body></html>

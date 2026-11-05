@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Рулетка</title>
+<style>
+.bd{display:grid;grid-template-columns:repeat(14,minmax(34px,1fr));gap:3px;width:100%;max-width:840px}
+.bn,.bo,.bz{display:grid;place-items:center;border:1px solid #fff6;border-radius:6px;padding:9px 2px;cursor:pointer;position:relative;font-weight:700;font-size:14px}
+.rd{background:#c4122f}.bk{background:#161616}.bz{background:#0a8a3a}.bo{background:rgba(255,255,255,.12)}.bo.rd{background:#c4122f}.bo.bk{background:#161616}
+.bn:hover,.bo:hover,.bz:hover{filter:brightness(1.4)}
+[data-a]:not([data-a=""])::after{content:attr(data-a);position:absolute;right:2px;top:2px;background:var(--c3);color:#000;border-radius:50%;min-width:22px;height:22px;font-size:11px;display:grid;place-items:center;padding:0 3px;box-shadow:0 0 8px #000}
+#hist span{padding:3px 9px;border-radius:50%;font-weight:700;font-size:13px}
+canvas#wh{max-width:100%}
+</style></head><body>
+<div class="cm"><div class="felt">
+<div class="row" style="gap:28px"><canvas id="wh" width="340" height="340"></canvas>
+<div class="row" style="flex-direction:column;min-width:240px;max-width:340px"><div class="big" id="res" style="font-size:22px"></div><div class="row" id="hist"></div>
+<div class="hint">Клик по полю — поставить фишку, правый клик — снять. Число ×36, дюжина и колонка ×3, красное/чёрное, чёт/нечёт, 1-18/19-36 ×2.</div></div></div>
+<div id="board" style="width:100%;display:flex;justify-content:center"></div>
+<div class="row"><span class="hint">Фишка:</span><div class="row" id="chips"></div></div>
+<div class="row"><button onclick="clr()">Очистить</button><button onclick="again()">Повторить</button><button id="go" onclick="spin()" style="font-weight:800;background:var(--c2);color:#000;padding:12px 40px">КРУТИТЬ</button></div>
+<div class="hint" id="tot"></div></div></div>
+<script src="common.js"></script>
+<script>
+cinit(1);const $=i=>document.getElementById(i);
+const ORD=[0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26],RED=new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]),TAU=Math.PI*2,R0=160;
+let bets={},last={},chip=50,spinning=0,wa=0,ba=-1.5708,br=R0-30,hist=[],anim=null,lpk=-1,lt=0;
+const col=n=>n==0?'#0a8a3a':RED.has(n)?'#c4122f':'#161616';
+const total=()=>Object.values(bets).reduce((a,b)=>a+b,0);
+function board(){let h='<div class="bd"><div class="bz" data-k="n0" style="grid-row:1/4;grid-column:1">0</div>';
+for(let c=0;c<12;c++)for(let r=0;r<3;r++){const n=c*3+(3-r);h+=`<div class="bn ${RED.has(n)?'rd':'bk'}" data-k="n${n}" style="grid-row:${r+1};grid-column:${c+2}">${n}</div>`}
+for(let r=0;r<3;r++)h+=`<div class="bo" data-k="cl${3-r}" style="grid-row:${r+1};grid-column:14">2:1</div>`;
+[[1,'1-я дюжина'],[2,'2-я дюжина'],[3,'3-я дюжина']].forEach(([i,t])=>h+=`<div class="bo" data-k="dz${i}" style="grid-row:4;grid-column:${2+(i-1)*4}/span 4">${t}</div>`);
+[['low','1-18'],['even','Чёт'],['red','Красное'],['black','Чёрное'],['odd','Нечёт'],['high','19-36']].forEach(([k,t],i)=>h+=`<div class="bo ${k=='red'?'rd':k=='black'?'bk':''}" data-k="${k}" style="grid-row:5;grid-column:${2+i*2}/span 2">${t}</div>`);
+$('board').innerHTML=h+'</div>'}
+function draw(){document.querySelectorAll('[data-k]').forEach(c=>{c.dataset.a=bets[c.dataset.k]||''});$('tot').textContent='Всего поставлено: '+total()}
+function chips(){chipRow($('chips'),[10,50,100,500,1000],v=>{chip=v;chips()},chip)}
+$('board').onclick=e=>{const c=e.target.closest('[data-k]');if(!c||spinning)return;if(CS.bal-total()<chip){msg('Не хватает монет');return}bets[c.dataset.k]=(bets[c.dataset.k]||0)+chip;draw();bleep(600,.05,'square',.05)};
+$('board').oncontextmenu=e=>{e.preventDefault();const c=e.target.closest('[data-k]');if(!c||spinning)return;const k=c.dataset.k;if(bets[k]){bets[k]=Math.max(0,bets[k]-chip);if(!bets[k])delete bets[k]}draw()};
+function clr(){if(spinning)return;bets={};draw()}
+function again(){if(spinning)return;const t=Object.values(last).reduce((a,b)=>a+b,0);if(!t)return;if(t>CS.bal){msg('Не хватает монет');return}bets={...last};draw()}
+function pay(k,n){if(k[0]=='n')return +k.slice(1)==n?36:0;if(n==0)return 0;if(k.startsWith('dz'))return Math.ceil(n/12)==+k[2]?3:0;if(k.startsWith('cl'))return n%3==(+k[2])%3?3:0;
+const m={low:n<=18,high:n>=19,even:n%2==0,odd:n%2==1,red:RED.has(n),black:!RED.has(n)}[k];return m?2:0}
+function spin(){if(spinning)return;const t=total();if(!t){msg('Сделай ставку');return}if(t>CS.bal){msg('Не хватает монет');return}
+cadd(-t);last={...bets};spinning=1;$('go').disabled=true;$('res').textContent='Крутим…';
+const n=Math.floor(Math.random()*37),idx=ORD.indexOf(n),wf=-1.5708-idx*(TAU/37);let wT=wf;const w0=wa;while(wT>w0-62.8)wT-=TAU;anim={t0:performance.now(),dur:5600,w0,wT,wf,n,t};bleep(200,.3,'sawtooth',.05,300)}
+function fin(a){const n=a.n;let ret=0;for(const k in last)ret+=last[k]*pay(k,n);bets={};spinning=0;$('go').disabled=false;wa=a.wf;
+if(ret)cadd(ret);hist.unshift(n);hist=hist.slice(0,14);
+$('hist').innerHTML=hist.map(x=>`<span style="background:${col(x)}">${x}</span>`).join('');
+const net=ret-a.t;$('res').innerHTML=`Выпало <b style="color:${n==0?'#4dff88':RED.has(n)?'#ff6b81':'#ccc'}">${n}</b> (${n==0?'зеро':RED.has(n)?'красное':'чёрное'})<br>${net>0?'Выигрыш: +'+net:ret?'Возврат: '+ret:'Ставки проиграли'}`;
+if(ret){bleep(660,.15,'triangle',.1);setTimeout(()=>bleep(880,.2,'triangle',.1),150)}else bleep(160,.3,'sawtooth',.06,-80);draw()}
+function wheel(){const c=$('wh').getContext('2d'),st=TAU/37;c.clearRect(0,0,340,340);c.save();c.translate(170,170);
+c.fillStyle='#4a2f14';c.beginPath();c.arc(0,0,R0+4,0,TAU);c.fill();
+for(let i=0;i<37;i++){const n=ORD[i],a=wa+i*st;c.beginPath();c.moveTo(0,0);c.arc(0,0,R0-14,a-st/2,a+st/2);c.closePath();c.fillStyle=col(n);c.fill();c.strokeStyle='#d9b45a';c.lineWidth=1;c.stroke();
+c.save();c.rotate(a);c.translate(R0-34,0);c.rotate(Math.PI/2);c.fillStyle='#fff';c.font='bold 11px sans-serif';c.textAlign='center';c.fillText(n,0,4);c.restore()}
+const gr=c.createRadialGradient(0,0,5,0,0,70);gr.addColorStop(0,'#f5e6a3');gr.addColorStop(1,'#8a6a1c');c.fillStyle=gr;c.beginPath();c.arc(0,0,66,0,TAU);c.fill();c.fillStyle='#3a2410';c.beginPath();c.arc(0,0,14,0,TAU);c.fill();
+c.fillStyle='#fff';c.shadowColor='#fff';c.shadowBlur=8;c.beginPath();c.arc(Math.cos(ba)*br,Math.sin(ba)*br,6,0,TAU);c.fill();c.shadowBlur=0;
+c.fillStyle='#ffe14a';c.beginPath();c.moveTo(-9,-R0-6);c.lineTo(9,-R0-6);c.lineTo(0,-R0+12);c.closePath();c.fill();c.restore()}
+function frame(now){if(anim){const u=Math.min(1,(now-anim.t0)/anim.dur),e=1-(1-u)**3;wa=anim.w0+(anim.wT-anim.w0)*e;ba=-1.5708-(1-e)*30;br=R0-30+14*Math.max(0,1-u*1.6)+Math.sin(u*60)*3*(1-u)**2;
+const pk=Math.floor(wa/(TAU/37));if(pk!=lpk&&now-lt>70){lpk=pk;lt=now;bleep(900,.02,'square',.012)}if(u>=1){const a=anim;anim=null;fin(a)}}
+else{wa=(wa+.003)%TAU;ba=-1.5708;br=R0-30}wheel();requestAnimationFrame(frame)}
+board();chips();draw();requestAnimationFrame(frame);
+</script></body></html>

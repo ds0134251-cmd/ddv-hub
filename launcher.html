@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DDV Game Hub</title>
+<style>
+:root{--c1:#00f0ff;--c2:#ff2bd6;--c3:#ffe14a;--bg:#07040f;color-scheme:dark}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%;background:var(--bg);color:#fff;font-family:"Segoe UI",system-ui,sans-serif;overflow:hidden;user-select:none;transition:opacity .35s}
+body.out{opacity:0}
+canvas{position:fixed;inset:0;width:100%;height:100%}
+#ui{position:fixed;inset:0;display:flex;flex-direction:column;overflow-y:auto}
+header{display:flex;align-items:center;gap:18px;padding:18px 28px;flex-wrap:wrap}
+.logo{font-weight:800;font-size:26px;letter-spacing:.14em;background:linear-gradient(90deg,var(--c1),var(--c2));-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 12px var(--c2))}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;flex:1}
+button{font:inherit;color:#fff;cursor:pointer;border:1px solid var(--c1);background:rgba(10,4,30,.55);border-radius:12px;padding:9px 18px;transition:.15s;backdrop-filter:blur(6px)}
+button:hover{box-shadow:0 0 18px var(--c1);transform:translateY(-2px)}
+button.sel{background:var(--c1);color:#000;font-weight:700}
+.by{padding:6px 18px;border:1px solid var(--c3);border-radius:99px;color:var(--c3);font-size:13px;letter-spacing:.1em;box-shadow:0 0 16px var(--c3)}.by b{color:#fff}
+main{flex:1;padding:0 28px 26px;max-width:1240px;width:100%;margin:0 auto}
+.hi{font-size:18px;opacity:.9;margin:6px 0 18px;text-shadow:0 1px 8px #000}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:22px}
+.gc{display:flex;flex-direction:column;gap:10px;padding:20px;border-radius:22px;background:rgba(10,6,28,.62);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.16);transition:.25s}
+.gc:hover{transform:translateY(-8px);border-color:var(--c1);box-shadow:0 14px 50px rgba(0,0,0,.5),0 0 30px var(--c1)}
+.ban{height:140px;border-radius:14px;display:grid;place-items:center;font-size:70px;overflow:hidden;position:relative}
+.ban span{animation:fl 3s ease-in-out infinite;filter:drop-shadow(0 0 16px #fff)}
+@keyframes fl{50%{transform:translateY(-10px) rotate(4deg)}}
+.b1{background:linear-gradient(135deg,var(--c1),var(--c2))}.b2{background:linear-gradient(135deg,var(--c3),var(--c2))}.b3{background:linear-gradient(135deg,#1b2a6b,var(--c1))}
+.gc h2{font-size:24px}.tags{font-size:12px;color:var(--c3);letter-spacing:.06em}
+.gc p{font-size:14px;line-height:1.55;opacity:.88;flex:1}.st{font-size:12px;opacity:.7}
+.play{font-size:18px;font-weight:800;letter-spacing:.12em;padding:13px;border-color:var(--c2);background:var(--c2);color:#000}
+.rx{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:12px 0}
+.lc{padding:12px;border-radius:16px;background:rgba(10,6,28,.62);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.14);display:flex;flex-direction:column;gap:6px;transition:.2s}
+.lc.on{border-color:var(--c1);box-shadow:0 0 20px var(--c1)}.lc .ic{font-size:30px}.lc input{width:100%;accent-color:var(--c2)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}
+.chip{padding:6px 14px;border-radius:99px;font-size:13px}
+.sec{margin:6px 0 12px;font-size:26px;text-shadow:0 1px 8px #000}.sec small{font-size:14px;opacity:.75;font-weight:400}.b4{background:linear-gradient(135deg,#00c853,var(--c1))}.b5{background:linear-gradient(135deg,#f59e0b,var(--c2))}.b6{background:linear-gradient(135deg,#475569,var(--c1))}
+h3{margin:14px 0 4px;font-size:15px;color:var(--c3);letter-spacing:.06em}
+.glass{padding:16px;border-radius:18px;background:rgba(10,6,28,.55);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.14);margin-bottom:12px}
+.sw{width:120px;height:70px;color:#000;font-weight:800;text-shadow:0 0 6px #fff8;border-color:transparent}.sw.sel{outline:3px solid #fff}
+.mv{display:flex;align-items:center;gap:12px}.mv input{accent-color:var(--c2);width:220px}
+footer{text-align:center;padding:12px;font-size:12px;opacity:.55}
+</style></head><body>
+<canvas id="c"></canvas>
+<div id="ui">
+<header><div class="logo">DDV GAME HUB</div>
+<div class="tabs"><button id="t0" class="sel" onclick="view(0)">🎮 Игры</button><button id="t1" onclick="view(1)">🌊 Тихая гавань</button><button id="t2" onclick="view(2)">🎨 Оформление</button></div>
+<div class="by">создатель · <b>ddv_7202</b></div></header>
+<main>
+<section id="v0"><p class="hi" id="hi"></p>
+<div class="row" id="flt" style="margin-bottom:14px;justify-content:flex-start"></div>
+<div class="cards" id="cards"></div></section>
+<section id="v1" style="display:none"><h2 class="sec">Тихая гавань <small>— звуки и музыка для полного расслабления</small></h2>
+<div class="glass"><h3>Готовые пресеты</h3><div class="row" id="pre"></div><div class="st" id="now" style="margin-top:6px"></div></div>
+<div class="glass"><div class="row"><button onclick="resume()">▶ Включить мой микс</button><button onclick="stopAll()">■ Остановить всё</button>
+<div class="mv">Общая громкость <input type="range" min="0" max="1" step=".02" id="mvol" oninput="rmaster(+this.value)"></div></div>
+<h3>Таймер сна</h3><div class="row" id="slp"></div></div>
+<div class="rx" id="lay"></div></section>
+<section id="v2" style="display:none"><div class="glass"><h3>Цветовая тема (действует во всех играх)</h3><div class="row" id="thm"></div></div>
+<div class="glass"><h3>Анимированный фон (лаунчер, казино, мини-игры, гавань)</h3><div class="row" id="scn"></div></div>
+<div class="glass"><h3>Анимации</h3><div class="row" id="anm"></div></div></section>
+</main>
+<footer>DDV Game Hub · сделал ddv_7202</footer></div>
+<script src="common.js"></script>
+<script>
+const $=i=>document.getElementById(i),cv=$('c'),g=cv.getContext('2d');let W,H;const rs=()=>{W=cv.width=innerWidth;H=cv.height=innerHeight};onresize=rs;rs();
+applyTheme();(function lp(ts){scene(g,W,H,ts/1000);requestAnimationFrame(lp)})(0);
+function launch(u){document.body.classList.add('out');setTimeout(()=>location.href=u,350)}
+function view(i){[0,1,2].forEach(k=>{$('v'+k).style.display=k==i?'':'none';$('t'+k).classList.toggle('sel',k==i)});if(i==2)drawOpt()}
+function ls(k){try{return JSON.parse(localStorage.getItem(k))||{}}catch(e){return{}}}
+const h=new Date().getHours();
+const LV=(k,f,d)=>{try{const v=JSON.parse(localStorage.getItem(k));return v==null?(d||''):f(v)}catch(e){return d||''}};
+const K=n=>n<1e3?Math.floor(n)+'':n<1e6?(n/1e3).toFixed(1)+'K':n<1e9?(n/1e6).toFixed(1)+'M':(n/1e9).toFixed(1)+'B';
+const GAMES=[
+{u:'game.html',ic:'👾',t:'Neon Survivor',cat:'action',tg:'ЭКШЕН · РОГАЛИК · 50 НАВЫКОВ',d:'Неоновый рогалик-выживач. Ты — корабль против бесконечных волн врагов: двигайся, собирай опыт и выбирай из 50 навыков — ракеты, молнию, лазер, дронов, мины, щит и многое другое. Шесть боссов, семь героев, четыре арены, перерождения и смена интерфейса.',st:()=>LV('ns1',v=>`Рекорд: ${v.best|0} · Кристаллы: ◆ ${v.coins|0} · Звёзды: ★ ${v.rb|0}`)},
+{u:'casino.html',ic:'🎰',t:'Казино DDV',cat:'casino',tg:'СЛОТЫ · РУЛЕТКА · БЛЭКДЖЕК · ПОКЕР · КОСТИ',d:'Пять столов в одном месте: слоты с бесплатными вращениями, европейская рулетка с анимированным колесом, блэкджек, видеопокер и кости. Общий баланс, ежедневный бонус, монеты и звуки. Игра идёт только на виртуальные монеты — настоящих денег здесь нет.',st:()=>LV('cs1',v=>`Баланс: ${v.bal} монет · Лучший выигрыш: ${v.best|0}`,'Баланс: 1000 монет')},
+{u:'upgrader.html',ic:'🔫',t:'Апгрейдер',cat:'casino',tg:'ПРЕДМЕТЫ ПО МОТИВАМ RUST · ШАНС · УДАЧА',d:'Сложи несколько дешёвых предметов — например, пару «Томпсонов» — и попробуй превратить их в «Калаш». Чем дороже цель, тем ниже шанс: колесо покажет его заранее. Есть магазин, продажа и три вида ящиков. Предметы и монеты виртуальные, настоящих денег нет.',st:()=>LV('upg1',v=>`Апгрейдов: ✔ ${v.w|0} · ✖ ${v.l|0}`,'Общий баланс монет с казино')},
+{u:'#relax',ic:'🌊',t:'Тихая гавань',cat:'relax',tg:'МУЗЫКА · ЗВУКИ ПРИРОДЫ · ТАЙМЕР СНА',d:'Место, где можно выдохнуть. Смешивай дождь, океан, камин, ручей, ветер, ночных сверчков, птиц, пианино, лофи-аккорды, дзен-колокольчики и бинауральный звук для глубокого сна. Есть готовые пресеты, таймер сна и анимированные фоны.',st:()=>RL.length+' звуковых слоёв · '+PRE.length+' пресетов'},
+{u:'tetris.html',ic:'🧱',t:'Неон-тетрис',cat:'arcade',tg:'АРКАДА · КЛАССИКА',d:'Классический тетрис в неоне: вращай фигуры, собирай линии, лови комбо. С каждым уровнем падение быстрее. Есть тень фигуры и частицы при сгорании линий.',st:()=>LV('tet1',v=>'Рекорд: '+v)},
+{u:'snake.html',ic:'🐍',t:'Неон-змейка',cat:'arcade',tg:'АРКАДА · РЕКОРДЫ',d:'Классическая змейка в неоне. Собирай еду, лови золотые бонусы с таймером, не врезайся в стены и в собственный хвост. С каждым яблоком скорость растёт.',st:()=>LV('snk1',v=>'Рекорд: '+v)},
+{u:'flappy.html',ic:'🐤',t:'Неон-птица',cat:'arcade',tg:'АРКАДА · РЕФЛЕКСЫ',d:'Лети между неоновыми трубами, не касаясь их. Один клик — один взмах. Скорость растёт с каждым очком, а за птицей тянется светящийся след.',st:()=>LV('flp1',v=>'Рекорд: '+v)},
+{u:'breakout.html',ic:'🏓',t:'Неон-арканоид',cat:'arcade',tg:'АРКАДА · БОНУСЫ',d:'Отбивай шарик платформой и разбивай кирпичи. Бонусы: удлинение платформы, мультишар, лишняя жизнь и замедление. Уровни становятся сложнее.',st:()=>LV('brk1',v=>'Рекорд: '+v)},
+{u:'invaders.html',ic:'🛸',t:'Неон-захватчики',cat:'action',tg:'ЭКШЕН · ВОЛНЫ',d:'Отражай волны космических захватчиков и сбивай НЛО за бонусные очки. С каждой волной пришельцы быстрее и злее, а у тебя всего три жизни.',st:()=>LV('inv1',v=>'Рекорд: '+v)},
+{u:'aim.html',ic:'🎯',t:'Аим-тренер',cat:'action',tg:'РЕАКЦИЯ · ТОЧНОСТЬ',d:'Тридцать секунд на то, чтобы попасть по как можно большему числу сужающихся мишеней. В конце считаются точность и средняя реакция в миллисекундах.',st:()=>LV('aim1',v=>'Рекорд: '+v+' попаданий')},
+{u:'g2048.html',ic:'🔢',t:'2048',cat:'puzzle',tg:'ГОЛОВОЛОМКА · ЛОГИКА',d:'Сдвигай плитки и соединяй одинаковые числа, чтобы собрать заветные 2048. Управление стрелками или свайпом, отмена хода и сохраняемый рекорд.',st:()=>LV('g20481',v=>'Рекорд: '+v)},
+{u:'mines.html',ic:'💣',t:'Сапёр',cat:'puzzle',tg:'ГОЛОВОЛОМКА · ТРИ УРОВНЯ',d:'Найди все мины и не взорвись. Три уровня сложности, флажки, безопасный первый ход и таблица лучших времён.',st:()=>LV('mn1',v=>'Лучшее время: '+[0,1,2].map(i=>v[i]?v[i]+' с':'—').join(' / '))},
+{u:'ttt.html',ic:'❌',t:'Крестики-нолики',cat:'puzzle',tg:'СТРАТЕГИЯ · ПРОТИВ БОТА',d:'Сыграй против бота — от лёгкого до «Невозможного»: он просчитывает все ходы и не проигрывает. Ведётся общий счёт побед, ничьих и поражений.',st:()=>LV('ttt1',v=>`Побед: ${v.w} · Ничьих: ${v.d} · Поражений: ${v.l}`)},
+{u:'memory.html',ic:'🧠',t:'Память',cat:'puzzle',tg:'ПАМЯТЬ · ТРИ РАЗМЕРА ПОЛЯ',d:'Находи пары карточек за минимум ходов. Три размера поля, время и личный рекорд для каждого.',st:()=>LV('mem1',v=>'Лучшее: '+[0,1,2].map(i=>v[i]?v[i]:'—').join(' / ')+' ходов')},
+{u:'words.html',ic:'🔤',t:'Слово',cat:'puzzle',tg:'СЛОВА · КАК WORDLE',d:'Угадай слово из пяти букв за шесть попыток — как в Wordle, но на русском. «Слово дня» и случайные слова, серии побед и подсветка клавиатуры.',st:()=>LV('wd1',v=>`Серия: ${v.s} · Лучшая серия: ${v.b} · Побед: ${v.w}`)},
+{u:'puzzle15.html',ic:'🧩',t:'Пятнашки',cat:'puzzle',tg:'ГОЛОВОЛОМКА · КЛАССИКА',d:'Расставь плитки по порядку, двигая их в пустую клетку. Управление кликом или стрелками, счётчик ходов и лучшее время.',st:()=>LV('p151',v=>'Лучшее время: '+v+' с')},
+{u:'clicker.html',ic:'🪐',t:'Космо-ферма',cat:'fun',tg:'КЛИКЕР · ПРОГРЕСС ПОКА ТЕБЯ НЕТ',d:'Жми на планету, покупай генераторы — от солнечных панелей до целых галактик — и лови кометы. Энергия копится даже когда ты закрыл игру (до 8 часов).',st:()=>LV('clk1',v=>'Всего энергии: '+K(v.tot||0))},
+{u:'piano.html',ic:'🎹',t:'Синтезатор',cat:'fun',tg:'МУЗЫКА · ТВОРЧЕСТВО',d:'Виртуальное пианино на две октавы: четыре тембра, смена октав, игра с клавиатуры и спокойная авто-мелодия для расслабления.',st:()=>'Играй мышью или клавишами A S D F G H J K L'},
+{u:'draw.html',ic:'🎨',t:'Неон-рисовалка',cat:'fun',tg:'ТВОРЧЕСТВО · СИММЕТРИЯ',d:'Рисуй светящимися линиями с зеркальной симметрией (до 12 лучей), меняй толщину кисти и включай затухание следа. Очень медитативно.',st:()=>'Рисуй мышью или пальцем'}];
+let FC='all';
+function cards(){$('cards').innerHTML=GAMES.filter(g=>FC=='all'||g.cat==FC).map((g,i)=>`<article class="gc"><div class="ban b${i%6+1}"><span>${g.ic}</span></div><h2>${g.t}</h2><div class="tags">${g.tg}</div><p>${g.d}</p><div class="st">${g.st?g.st():''}</div><button class="play" onclick="${g.u=='#relax'?'view(1)':`launch('${g.u}')`}">▶ ${g.u=='#relax'?'ОТКРЫТЬ':'ИГРАТЬ'}</button></article>`).join('')}
+function filt(f){FC=f;$('flt').innerHTML=[['all','Все'],['action','Экшен'],['arcade','Аркады'],['puzzle','Головоломки'],['casino','Казино'],['relax','Спокойное'],['fun','Креатив']].map(([k,t])=>`<button class="chip${f==k?' sel':''}" onclick="filt('${k}')">${t} (${k=='all'?GAMES.length:GAMES.filter(g=>g.cat==k).length})</button>`).join('');cards()}
+$('hi').textContent=(h<6?'Доброй ночи':h<12?'Доброе утро':h<18?'Добрый день':'Добрый вечер')+'! Выбирай игру ('+GAMES.length+' штук) или иди расслабляться.';
+filt('all');
+function drawOpt(){$('thm').innerHTML=THEMES.map((t,i)=>`<button class="sw${U.th==i?' sel':''}" style="background:linear-gradient(135deg,${t.c[0]},${t.c[1]})" onclick="setTh(${i})">${t.n}</button>`).join('');
+$('scn').innerHTML=SCN.map((s,i)=>`<button class="chip${U.sc==i?' sel':''}" onclick="setSc(${i})">${s}</button>`).join('');
+const ch=(k,arr,t)=>`<div class="st" style="width:100%">${t}</div>`+arr.map((a,i)=>`<button class="chip${(U[k]|0)==i?' sel':''}" onclick="setU('${k}',${i})">${a}</button>`).join('');
+$('anm').innerHTML=ch('sp',['Медленно','Обычно','Быстро'],'Скорость анимаций')+ch('px',['Параллакс выкл','Параллакс вкл'],'Движение фона за мышью')+ch('pt',['Нет','Пыль','Светлячки','Снег','Искры'],'Частицы поверх фона')}
+function setU(k,i){U[k]=i;usave();drawOpt()}
+function setTh(i){U.th=i;usave();applyTheme();drawOpt()}
+function setSc(i){U.sc=i;usave();drawOpt()}
+function rBuild(){$('lay').innerHTML=RL.map(([id,nm,ic])=>`<div class="lc" id="lc_${id}"><div class="ic">${ic}</div><div>${nm}</div><input type="range" min="0" max="1" step=".02" id="rs_${id}" oninput="lv('${id}',+this.value)"></div>`).join('');
+$('pre').innerHTML=PRE.map((p,i)=>`<button class="chip" onclick="pre(${i})">${p[0]}</button>`).join('');
+$('slp').innerHTML=[0,15,30,60,120].map(m=>`<button class="chip" onclick="rsleep(${m});$('now').textContent='${m?'Таймер сна: '+m+' мин':'Таймер сна выключен'}'">${m?m+' мин':'Выкл'}</button>`).join('');
+$('mvol').value=U.rv;rsync()}
+function rsync(){RL.forEach(([id])=>{$('rs_'+id).value=U.rm[id]||0;$('lc_'+id).classList.toggle('on',!!RX.run[id])})}
+function lv(id,v){rset(id,v);$('lc_'+id).classList.toggle('on',v>0)}
+function pre(i){const o=PRE[i][1];RL.forEach(([id])=>rset(id,o[id]||0));rsync();$('now').textContent='Играет пресет: '+PRE[i][0]}
+function resume(){RL.forEach(([id])=>{if(U.rm[id]>0)rset(id,U.rm[id])});rsync();$('now').textContent='Играет твой микс'}
+function stopAll(){rstopAll();rsync();$('now').textContent='Остановлено'}
+rBuild();
+</script></body></html>

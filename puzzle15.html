@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Пятнашки</title>
+<style>.wrap{display:flex;flex-direction:column;align-items:center;gap:12px;padding:70px 12px 24px}.hud{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}.box{padding:6px 16px;border-radius:12px;background:rgba(10,6,28,.7);border:1px solid var(--c1);text-align:center;min-width:90px}.box b{color:var(--c3);font-size:20px}
+#b{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:10px;border-radius:18px;background:rgba(10,6,28,.72);border:2px solid var(--c1);box-shadow:0 0 28px var(--c1);width:min(92vw,400px);aspect-ratio:1}
+.t{display:grid;place-items:center;border-radius:12px;font-weight:800;font-size:clamp(22px,7vw,36px);cursor:pointer;background:linear-gradient(135deg,var(--c1),var(--c2));color:#000;transition:transform .12s}.t:hover{filter:brightness(1.2)}.t.z{background:transparent;cursor:default}</style></head><body>
+<div class="wrap"><div class="hud"><div class="box">Ходы<br><b id="mv">0</b></div><div class="box">Время<br><b id="tm">0</b></div><div class="box">Рекорд<br><b id="bs">—</b></div><button onclick="init()">Перемешать</button></div><div id="b"></div><div class="big" id="res"></div><div class="hint">Клик по плитке или стрелки. Расставь числа по порядку.</div></div>
+<script src="common.js"></script><script>
+gbg(1);const $=i=>document.getElementById(i);
+let T=[],mv=0,tm=0,iv=0,done=0,best=+localStorage.getItem('p151')||0;
+function init(){T=[...Array(15).keys()].map(i=>i+1).concat(0);let z=15;for(let i=0;i<300;i++){const nb=[],x=z%4,y=z/4|0;if(x>0)nb.push(z-1);if(x<3)nb.push(z+1);if(y>0)nb.push(z-4);if(y<3)nb.push(z+4);const j=nb[Math.random()*nb.length|0];[T[z],T[j]]=[T[j],T[z]];z=j}
+if(T.every((v,i)=>v==(i+1)%16))return init();mv=0;tm=0;done=0;clearInterval(iv);iv=0;$('res').textContent='';draw()}
+function draw(){$('mv').textContent=mv;$('tm').textContent=tm;$('bs').textContent=best?best+' с':'—';$('b').innerHTML=T.map((v,i)=>`<div class="t${v?'':' z'}" data-i="${i}">${v||''}</div>`).join('')}
+function move(i){if(done)return;const z=T.indexOf(0),x=i%4,y=i/4|0,zx=z%4,zy=z/4|0;if(Math.abs(x-zx)+Math.abs(y-zy)!=1)return;if(!iv)iv=setInterval(()=>{tm++;$('tm').textContent=tm},1000);[T[z],T[i]]=[T[i],T[z]];mv++;bleep(400+mv%10*30,.04,'triangle',.05);draw();
+if(T.every((v,k)=>v==(k+1)%16)){done=1;clearInterval(iv);$('res').textContent=`🏆 Готово за ${mv} ходов и ${tm} с!`;if(!best||tm<best){best=tm;try{localStorage.setItem('p151',best)}catch(e){}}draw();bleep(880,.4,'triangle',.1,400)}}
+$('b').onclick=e=>{const c=e.target.closest('[data-i]');if(c)move(+c.dataset.i)};
+addEventListener('keydown',e=>{const z=T.indexOf(0),x=z%4,y=z/4|0;let i=-1;if(e.code=='ArrowUp'&&y<3)i=z+4;else if(e.code=='ArrowDown'&&y>0)i=z-4;else if(e.code=='ArrowLeft'&&x<3)i=z+1;else if(e.code=='ArrowRight'&&x>0)i=z-1;if(i>=0){e.preventDefault();move(i)}});
+init();
+</script></body></html>
