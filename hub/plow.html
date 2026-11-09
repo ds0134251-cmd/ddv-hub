@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Снегоуборщик</title>
+<style>
+html,body{overflow:hidden;height:100%;background:#0a1420;color:#fff;font-family:"Segoe UI",system-ui,sans-serif;user-select:none}
+#gc{position:fixed;inset:0;width:100%;height:100%}
+#ui{position:fixed;inset:0;pointer-events:none}
+.hud{position:fixed;top:14px;left:50%;transform:translateX(-50%);display:flex;gap:12px;background:rgba(5,8,16,.72);border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:8px 16px;backdrop-filter:blur(8px);pointer-events:none;font-size:14px}
+.sc{text-align:center}.sc small{display:block;font-size:9px;letter-spacing:.12em;opacity:.7}.sc b{color:#a0d8ff;font-size:16px}
+.top{position:fixed;top:14px;left:14px;pointer-events:all}.top button{font:inherit;color:#fff;border:1px solid rgba(255,255,255,.25);background:rgba(5,8,16,.72);border-radius:10px;padding:7px 14px;cursor:pointer;font-size:13px;backdrop-filter:blur(8px)}
+.ovl{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:rgba(5,8,16,.82);backdrop-filter:blur(6px);pointer-events:all;text-align:center;padding:20px;transition:opacity .3s}
+.ovl.h{opacity:0;pointer-events:none}
+.ovl h1{font-size:48px;font-weight:900;letter-spacing:.12em;text-shadow:0 0 30px #60b8ff}
+.ovl h2{font-size:28px;color:#a0d8ff}.big{font-size:72px}
+.gb{padding:12px 36px;border-radius:12px;background:linear-gradient(135deg,#2a6ccc,#1a3d7a);border:1px solid #4a8de0;font:inherit;color:#fff;font-weight:700;cursor:pointer;font-size:17px;letter-spacing:.08em;box-shadow:0 8px 22px rgba(42,108,204,.5)}
+.gb:hover{background:linear-gradient(135deg,#3a7cdc,#2a4d8a);transform:translateY(-2px)}
+.mc{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.mc button{padding:9px 20px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);font:inherit;color:#fff;cursor:pointer;font-size:14px}
+.mc button.on{background:rgba(42,108,204,.4);border-color:#4a8de0}
+.mini{font-size:13px;color:rgba(255,255,255,.65);max-width:460px;line-height:1.5}
+.prog{position:fixed;top:0;left:0;right:0;height:5px;background:rgba(255,255,255,.12)}.pb{height:100%;background:linear-gradient(90deg,#2a6ccc,#60d8ff);transition:width .2s;border-radius:0 3px 3px 0}
+</style></head><body>
+<canvas id="gc"></canvas>
+<div class="top"><button onclick="togglePause()">⏸ Пауза</button></div>
+<div class="hud"><div class="sc"><small>ОЧИЩЕНО</small><b id="pct">0%</b></div><div class="sc"><small>ОЧКИ</small><b id="sc">0</b></div><div class="sc"><small>УРОВЕНЬ</small><b id="lv">1</b></div><div class="sc"><small>ЖИЗНИ</small><b id="lf">❤❤❤</b></div><div class="sc"><small>МУСОР</small><b id="tr">0</b></div></div>
+<div class="prog"><div class="pb" id="pb"></div></div>
+<div class="ovl" id="ov">
+<h1>СНЕГОУБОРЩИК</h1><div class="big">🚛</div>
+<div class="mc"><button data-m="0" onclick="setM(0)">❄️ Снег</button><button data-m="1" onclick="setM(1)">🍂 Осень</button><button data-m="2" onclick="setM(2)">🏙 Ночной город</button></div>
+<button class="gb" onclick="begin()">▶ ИГРАТЬ</button>
+<div class="mini">WASD / стрелки — движение. Собери мусор и контейнеры, избегай препятствия. Очисти весь город до нуля!</div>
+</div>
+<script src="common.js"></script>
+<script>
+gbg(1,1);const cv=document.getElementById('gc'),g=cv.getContext('2d');
+const $=i=>document.getElementById(i);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const MODES=[
+{n:'Снег',bg:'#0d1f35',road:'#1c3050',snow:'#d4e8ff',mline:'#2a4568',dirt:'#b0c8e0',part:'#e8f4ff',bld:'#1a3060',win:'#60b8ff'},
+{n:'Осень',bg:'#1a1208',road:'#2a2010',snow:'#c8a040',mline:'#504020',dirt:'#a07828',part:'#ffb830',bld:'#302010',win:'#ffa020'},
+{n:'Ночной город',bg:'#040810',road:'#080c14',snow:'#1a2535',mline:'#1a2535',dirt:'#2a3545',part:'#60a0ff',bld:'#060c18',win:'#ff9020'}];
+const TAU=Math.PI*2,CELL=48;
+let W,H,CW,CH,st='menu',keys={},car={x:0,y:0,angle:0,sp:0,asp:0},snow=[],trash=[],obs=[],spk=[],prt=[],score=0,lives=3,lv=1,hit=0,hitT=0,spawT=0,tot=0,rem=0,mx=0,mode=0,paused=0,lt=0,lastEv=0;
+
+function rs(){W=cv.width=innerWidth;H=cv.height=innerHeight;CW=Math.ceil(W/CELL)+2;CH=Math.ceil(H/CELL)+2}
+addEventListener('resize',rs);rs();
+
+function mkMap(){snow=[];trash=[];obs=[];tot=0;rem=0;mx=CW*CH;
+ for(let r=0;r<CH;r++)for(let c=0;c<CW;c++){if(Math.random()<.78){snow.push({c,r,s:rnd(.5,1),cl:0});tot++}}
+ for(let i=0;i<30+lv*4;i++)spawnTrash();
+ for(let i=0;i<8+lv*2;i++)spawnObs();
+ rem=tot;spawT=0}
+
+function spawnTrash(){const c=Math.floor(rnd(1,CW-1)),r=Math.floor(rnd(1,CH-1));trash.push({c,r,k:Math.random()*4|0,col:0})}
+function spawnObs(){let x,y,n=0;do{x=rnd(CELL*2,W-CELL*2);y=rnd(CELL*2,H-CELL*2);n++}while(n<30&&Math.hypot(x-car.x,y-car.y)<120);obs.push({x,y,k:Math.random()*3|0,r:28+Math.random()*14})}
+
+function begin(){car={x:W/2,y:H/2,angle:0,sp:0,asp:0};score=0;lives=3;lv=1;hit=0;hitT=0;prt=[];mkMap();st='play';$('ov').classList.add('h')}
+function setM(m){mode=m;document.querySelectorAll('.mc button').forEach((b,i)=>b.classList.toggle('on',i==m))}
+function togglePause(){if(st=='play'){paused^=1;$('ov').classList.toggle('h',!paused);if(paused)$('ov').innerHTML=`<h2>ПАУЗА</h2><button class="gb" onclick="togglePause()">▶ Продолжить</button><button class="gb" onclick="nextLv()">⏭ Пропустить уровень</button>`}}
+function nextLv(){lv++;mkMap();$('ov').classList.add('h');paused=0}
+
+function update(dt){if(!dt)return;
+ const sp=130+lv*18,turn=2.4,K=keys;
+ const fwd=(K.KeyW||K.ArrowUp?1:0)-(K.KeyS||K.ArrowDown?1:0);
+ const rot=(K.KeyD||K.ArrowRight?1:0)-(K.KeyA||K.ArrowLeft?1:0);
+ car.asp+=(fwd*sp-car.asp)*Math.min(1,dt*4);car.sp=car.asp;
+ car.angle+=rot*turn*dt*(Math.abs(car.sp)>5?1:.2);
+ car.x=clamp(car.x+Math.cos(car.angle)*car.sp*dt,20,W-20);
+ car.y=clamp(car.y+Math.sin(car.angle)*car.sp*dt,20,H-20);
+ if(Math.abs(car.sp)>8)prt.push({x:car.x-Math.cos(car.angle)*18,y:car.y-Math.sin(car.angle)*18,vx:rnd(-18,18),vy:rnd(-18,18),l:rnd(.3,.55)});
+ for(const p of prt){p.x+=p.vx*dt;p.y+=p.vy*dt;p.l-=dt}prt=prt.filter(p=>p.l>0);
+
+ // plow action — cells within reach
+ const reach=CELL*.75,cx=car.x+Math.cos(car.angle)*CELL*.65,cy=car.y+Math.sin(car.angle)*CELL*.65;
+ for(const s of snow){if(!s.cl){const wx=s.c*CELL+CELL/2,wy=s.r*CELL+CELL/2;if(Math.hypot(wx-cx,wy-cy)<reach+s.s*CELL*.55){s.cl=1;rem--;score++;for(let i=0;i<4;i++)prt.push({x:wx,y:wy,vx:rnd(-40,40),vy:rnd(-40,40),l:.35})}}}
+
+ // trash pickup
+ for(const t of trash){if(!t.col){const wx=t.c*CELL+CELL/2,wy=t.r*CELL+CELL/2;if(Math.hypot(wx-car.x,wy-car.y)<CELL*.8){t.col=1;score+=10;for(let i=0;i<8;i++)prt.push({x:wx,y:wy,vx:rnd(-60,60),vy:rnd(-80,20),l:.5});bleep(620,.05,'square',.05)}}}
+ trash=trash.filter(t=>!t.col);
+
+ // obstacles collision
+ hitT-=dt;if(hitT<0)hitT=0;
+ if(hitT<=0&&hit==0)for(const o of obs){if(Math.hypot(car.x-o.x,car.y-o.y)<o.r+16){hit=1;hitT=1.4;lives--;bleep(130,.35,'sawtooth',.08,-60);spk.push({x:car.x,y:car.y,t:0});if(lives<=0){setTimeout(()=>gameOver(),600);st='dead'}break}}
+ if(hit&&hitT<=0)hit=0;
+ for(const s of spk)s.t+=dt;spk=spk.filter(s=>s.t<.9);
+
+ // spawn bonus trash periodically
+ spawT-=dt;if(spawT<=0){spawT=rnd(8,15);if(trash.length<60+lv*5)spawnTrash()}
+
+ // random events
+ lastEv-=dt;if(lastEv<=0){lastEv=rnd(20,35);if(obs.length<22+lv*3)spawnObs()}
+
+ // level complete
+ if(rem<=0&&st=='play'){score+=lives*200+Math.floor(100/Math.max(1,lv));lv++;if(lv>5){win();return}setTimeout(()=>{mkMap();$('ov').classList.add('h');paused=0},400);paused=1;$('ov').classList.remove('h');$('ov').innerHTML=`<h2>УРОВЕНЬ ${lv-1} ПРОЙДЕН!</h2><div class="big">🎉</div><div>Очки: <b>${score}</b> · Жизней осталось: ${lives}</div><button class="gb" onclick="nextLv()">Следующий уровень</button>`}
+
+ // HUD
+ const pct=tot>0?((tot-rem)/tot*100).toFixed(1):100;$('pct').textContent=pct+'%';$('pb').style.width=pct+'%';$('sc').textContent=score;$('lv').textContent=lv;$('lf').textContent='❤'.repeat(Math.max(0,lives));$('tr').textContent=trash.length}
+
+function gameOver(){st='menu';$('ov').classList.remove('h');$('ov').innerHTML=`<h2>КОНЕЦ ИГРЫ</h2><div class="big">💔</div><div>Очки: <b>${score}</b> · Уровень: <b>${lv}</b></div><button class="gb" onclick="begin()">Ещё раз</button><button class="gb" onclick="location.reload()">Меню</button>`}
+function win(){st='menu';$('ov').classList.remove('h');$('ov').innerHTML=`<h2>🏆 ГОРОД ЧИСТ!</h2><div class="big">🌟</div><div>Финальный счёт: <b>${score}</b></div><button class="gb" onclick="begin()">Играть снова</button>`}
+
+function draw(){const M=MODES[mode];g.fillStyle=M.bg;g.fillRect(0,0,W,H);
+ // road grid
+ g.strokeStyle=M.mline;g.lineWidth=1;g.globalAlpha=.4;g.beginPath();for(let c=0;c<CW;c++){g.moveTo(c*CELL,0);g.lineTo(c*CELL,H)}for(let r=0;r<CH;r++){g.moveTo(0,r*CELL);g.lineTo(W,r*CELL)}g.stroke();g.globalAlpha=1;
+ // snow patches
+ for(const s of snow){if(!s.cl){const x=s.c*CELL,y=s.r*CELL,k=s.s;g.fillStyle=M.snow;g.globalAlpha=.55+k*.35;g.fillRect(x+2,y+2,CELL-4,CELL-4)}}g.globalAlpha=1;
+ // particles
+ const pc=MODES[mode].part;for(const p of prt){g.globalAlpha=Math.max(0,p.l/.55);g.fillStyle=pc;g.fillRect(p.x,p.y,3,3)}g.globalAlpha=1;
+ // trash
+ const TK=['🗑️','🍂','📦','🧴'];for(const t of trash){const x=t.c*CELL+CELL*.15,y=t.r*CELL+CELL*.1;g.font='22px "Segoe UI Emoji",sans-serif';g.textBaseline='top';g.fillText(TK[t.k],x,y)}
+ // obstacles
+ const OK=['🚧','🌲','🧱'];for(const o of obs){g.font='32px "Segoe UI Emoji",sans-serif';g.textBaseline='middle';g.textAlign='center';g.fillText(OK[o.k],o.x,o.y);g.textAlign='left';g.textBaseline='alphabetic'}
+ // sparks
+ for(const s of spk){const a=1-s.t/.9;for(let i=0;i<16;i++){const ang=i*TAU/16,r=s.t*140;g.globalAlpha=a;g.strokeStyle=`hsl(${i*20},100%,65%)`;g.lineWidth=2;g.beginPath();g.moveTo(s.x+Math.cos(ang)*r*.5,s.y+Math.sin(ang)*r*.5);g.lineTo(s.x+Math.cos(ang)*r,s.y+Math.sin(ang)*r);g.stroke()}}g.globalAlpha=1;
+ // truck
+ const {x,y,angle}=car,hf=hit&&Math.sin(Date.now()/60)>0;g.save();g.translate(x,y);g.rotate(angle);
+ // body
+ g.shadowColor='#60a8ff';g.shadowBlur=hf?22:10;g.fillStyle=hf?'#ff5530':'#2060cc';g.beginPath();g.roundRect(-28,-14,56,28,6);g.fill();
+ // cab
+ g.fillStyle=hf?'#ff7050':'#3080f0';g.beginPath();g.roundRect(6,-11,18,22,5);g.fill();
+ // window
+ g.fillStyle='#c0e8ff';g.globalAlpha=.8;g.fillRect(9,-8,12,13);g.globalAlpha=1;
+ // plow
+ g.fillStyle='#ffd060';g.shadowColor='#ffd060';g.shadowBlur=12;g.beginPath();g.moveTo(28,-10);g.lineTo(42,-14);g.lineTo(42,14);g.lineTo(28,10);g.closePath();g.fill();
+ // wheels
+ g.shadowBlur=0;g.fillStyle='#1a1a2a';for(const[wx,wy] of[[-18,-16],[-18,16],[16,-16],[16,16]]){g.beginPath();g.arc(wx,wy,6,0,TAU);g.fill();g.strokeStyle='#555';g.lineWidth=1.5;g.stroke()}
+ g.restore();
+ // lights night mode
+ if(mode==2){g.save();g.translate(x,y);g.rotate(angle);const gr=g.createConicalGradient?null:null;g.globalAlpha=.18;g.fillStyle='#ffe8a0';g.beginPath();g.moveTo(28,0);g.lineTo(28+180,80);g.lineTo(28+180,-80);g.closePath();g.fill();g.globalAlpha=1;g.restore()}}
+
+addEventListener('keydown',e=>{keys[e.code]=1;if(/Arrow|Space/.test(e.code))e.preventDefault()});
+addEventListener('keyup',e=>{delete keys[e.code]});
+
+// touch / mobile drag
+let tx0=0,ty0=0,tvx=0,tvy=0;
+addEventListener('touchstart',e=>{tx0=e.touches[0].clientX;ty0=e.touches[0].clientY});
+addEventListener('touchmove',e=>{e.preventDefault();const dx=e.touches[0].clientX-tx0,dy=e.touches[0].clientY-ty0;tvx=dx;tvy=dy;
+ keys.ArrowUp=Math.abs(dy)>Math.abs(dx)&&dy<-18?1:0;keys.ArrowDown=Math.abs(dy)>Math.abs(dx)&&dy>18?1:0;
+ keys.ArrowLeft=Math.abs(dx)>Math.abs(dy)&&dx<-18?1:0;keys.ArrowRight=Math.abs(dx)>Math.abs(dy)&&dx>18?1:0},{passive:false});
+addEventListener('touchend',()=>{keys={};tvx=0;tvy=0});
+
+function loop(ts){const dt=Math.min(.05,(ts-lt)/1000||0);lt=ts;if(st=='play'&&!paused)update(dt);draw();requestAnimationFrame(loop)}
+setM(0);$('ov').innerHTML=`<h1>СНЕГОУБОРЩИК</h1><div class="big">🚛</div><div class="mc"><button data-m="0" onclick="setM(0)" class="on">❄️ Снег</button><button data-m="1" onclick="setM(1)">🍂 Осень</button><button data-m="2" onclick="setM(2)">🏙 Ночной город</button></div><button class="gb" onclick="begin()">▶ ИГРАТЬ</button><div class="mini">WASD / стрелки — движение. Перекатись плугом по снегу, подбирай мусор, избегай препятствий. Очисти весь город!</div>`;
+
+globalThis._plowLive={get snow(){return snow},get trash(){return trash},set trash(v){trash=v},get obs(){return obs},set obs(v){obs=v},get prt(){return prt},get spk(){return spk},get car(){return car},get score(){return score},get lives(){return lives},set lives(v){lives=v},get lv(){return lv},set lv(v){lv=v},get rem(){return rem},set rem(v){rem=v},get tot(){return tot},set tot(v){tot=v},get st(){return st},set st(v){st=v},get keys(){return keys},set keys(v){keys=v},begin,update,setM,mkMap,draw,nextLv,togglePause,MODES,CELL};
+requestAnimationFrame(loop);
+</script></body></html>

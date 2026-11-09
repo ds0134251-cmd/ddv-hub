@@ -143,8 +143,8 @@ button:disabled{opacity:.4;cursor:default}button.sel{background:var(--c1);color:
 @keyframes dl{from{transform:translateY(-70px) rotate(-10deg);opacity:0}}
 #cmsg{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.85);border:1px solid var(--c3);padding:10px 20px;border-radius:12px;opacity:0;pointer-events:none;transition:.3s;z-index:9}#cmsg.on{opacity:1}
 .hubb{position:fixed;top:12px;left:12px;z-index:5}`;
-function gbg(hub){applyTheme();const st=document.createElement('style');st.textContent=BCSS;document.head.appendChild(st);
-const cvs=document.createElement('canvas');cvs.id='bg';document.body.prepend(cvs);const gx=cvs.getContext('2d');let bw,bh;const brs=()=>{bw=cvs.width=innerWidth;bh=cvs.height=innerHeight};addEventListener('resize',brs);brs();(function lp(ts){scene(gx,bw,bh,ts/1000);requestAnimationFrame(lp)})(0);
+function gbg(hub,nobg){applyTheme();const st=document.createElement('style');st.textContent=BCSS;document.head.appendChild(st);
+if(!nobg){const cvs=document.createElement('canvas');cvs.id='bg';document.body.prepend(cvs);const gx=cvs.getContext('2d');let bw,bh;const brs=()=>{bw=cvs.width=innerWidth;bh=cvs.height=innerHeight};addEventListener('resize',brs);brs();(function lp(ts){scene(gx,bw,bh,ts/1000);requestAnimationFrame(lp)})(0)}
 if(hub){const b=document.createElement('button');b.className='hubb';b.textContent='← Хаб';b.onclick=()=>{location.href='launcher.html'};document.body.appendChild(b)}}
 const CS=(()=>{let d={bal:1000,bi:1,best:0,spins:0,last:0};try{Object.assign(d,JSON.parse(localStorage.getItem('cs1')))}catch(e){}return d})();
 const cssave=()=>{try{localStorage.setItem('cs1',JSON.stringify(CS))}catch(e){}};

@@ -1,21 +1,145 @@
 <!DOCTYPE html>
 <html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Аим-тренер</title>
-<style>.wrap{display:flex;flex-direction:column;align-items:center;gap:10px;padding:70px 12px 20px}.hud{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}.box{padding:6px 16px;border-radius:12px;background:rgba(10,6,28,.7);border:1px solid var(--c1);text-align:center;min-width:90px}.box b{color:var(--c3);font-size:20px}
-#fld{position:relative;width:min(94vw,900px);height:min(60vh,480px);border-radius:18px;background:rgba(5,3,15,.6);border:2px solid var(--c1);box-shadow:0 0 26px var(--c1);overflow:hidden;cursor:crosshair}
-.tg{position:absolute;border-radius:50%;background:radial-gradient(circle,#fff 0 18%,var(--c2) 19% 45%,#fff 46% 58%,var(--c2) 59%);box-shadow:0 0 18px var(--c2);animation:sh 1.3s linear forwards;cursor:pointer}@keyframes sh{to{transform:scale(.25);opacity:.4}}</style></head><body>
-<div class="wrap"><div class="hud"><div class="box">Попадания<br><b id="ht">0</b></div><div class="box">Промахи<br><b id="ms">0</b></div><div class="box">Время<br><b id="tm">30</b></div><div class="box">Рекорд<br><b id="bs">0</b></div></div>
-<div id="fld"></div><div class="big" id="res">Нажми «Старт» и бей по мишеням!</div><button onclick="start()" style="font-weight:800;background:var(--c2);color:#000;padding:12px 40px">СТАРТ · 30 секунд</button></div>
-<script src="common.js"></script><script>
-gbg(1);const $=i=>document.getElementById(i);
-let hits=0,miss=0,tm=30,iv=0,rt=[],on=0,best=+localStorage.getItem('aim1')||0;
-function upd(){$('ht').textContent=hits;$('ms').textContent=miss;$('tm').textContent=tm;$('bs').textContent=best}
-function start(){clearInterval(iv);hits=0;miss=0;tm=30;rt=[];on=1;$('res').textContent='';$('fld').innerHTML='';spawn();iv=setInterval(()=>{tm--;upd();if(tm<=0)end()},1000);upd()}
-function spawn(){if(!on)return;const f=$('fld'),w=f.clientWidth||800,h=f.clientHeight||440,r=rnd(22,40),x=rnd(4,Math.max(5,w-r*2-4)),y=rnd(4,Math.max(5,h-r*2-4)),d=document.createElement('div');
-d.className='tg';d.style.cssText=`left:${x}px;top:${y}px;width:${r*2}px;height:${r*2}px`;const t0=performance.now();
-d.onclick=e=>{e.stopPropagation();if(!on)return;rt.push(performance.now()-t0);hits++;bleep(700+hits*5,.05,'triangle',.07);d.remove();upd();spawn()};
-f.appendChild(d);setTimeout(()=>{if(on&&d.parentNode){d.remove();miss++;upd();spawn()}},1300)}
-$('fld').onclick=()=>{if(on){miss++;upd();bleep(150,.05,'square',.04)}};
-function end(){on=0;clearInterval(iv);$('fld').innerHTML='';const acc=hits+miss?Math.round(hits/(hits+miss)*100):0,avg=rt.length?Math.round(rt.reduce((a,b)=>a+b,0)/rt.length):0;if(hits>best){best=hits;try{localStorage.setItem('aim1',best)}catch(e){}}$('res').textContent=`Итог: ${hits} попаданий · точность ${acc}% · средняя реакция ${avg} мс`;upd();bleep(660,.3,'triangle',.1)}
-upd();
+<title>Aim Trainer</title>
+<style>
+:root{--ac:#ff7a1a;--pn:#12151c;--bd:#232938;--tx:#dfe5f2;--mu:#7d879c}
+html,body{background:#0a0c11!important;color:var(--tx);overflow:auto}
+.shell{max-width:1320px;margin:0 auto;padding:56px 14px 24px;display:flex;flex-direction:column;gap:12px}
+.hdr{display:flex;align-items:baseline;gap:12px}.hdr b{font-size:20px;letter-spacing:.24em;font-weight:800}.hdr b i{color:var(--ac);font-style:normal}.hdr span{color:var(--mu);font-size:12px;letter-spacing:.1em}
+.layout{display:grid;grid-template-columns:220px minmax(0,1fr) 250px;gap:14px;align-items:start}
+@media(max-width:1050px){.layout{grid-template-columns:1fr}}
+.side{background:var(--pn);border:1px solid var(--bd);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.side h3{font-size:11px;letter-spacing:.18em;color:var(--mu);font-weight:700;margin-top:6px}.side h3:first-child{margin-top:0}
+.seg{display:flex;flex-direction:column;gap:6px}.seg.h{flex-direction:row}.seg.h button{flex:1;padding:9px 4px}
+.shell button{font:inherit;color:var(--tx);background:#171b25;border:1px solid var(--bd);border-radius:8px;padding:10px 16px;cursor:pointer;transition:.18s;backdrop-filter:none;text-align:center}
+.shell button:hover:not(:disabled){background:#1f2532;border-color:#3a4358;transform:none;box-shadow:none}
+.shell button.on{background:var(--ac);border-color:var(--ac);color:#0a0c11;font-weight:800}
+.shell button.pri{background:var(--ac);border-color:var(--ac);color:#0a0c11;font-weight:800;letter-spacing:.06em}
+.shell button:disabled{opacity:.4;cursor:default}
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.sc{background:var(--pn);border:1px solid var(--bd);border-radius:10px;padding:8px 12px}.sc small{display:block;font-size:10px;letter-spacing:.18em;color:var(--mu);font-weight:700}.sc b{font-size:24px;font-variant-numeric:tabular-nums;display:inline-block}
+.sc b.pop{animation:pop .22s ease-out}@keyframes pop{from{transform:scale(1.25);color:var(--ac)}}
+.field{position:relative;border:1px solid var(--bd);border-radius:12px;overflow:hidden;background:#0d1017;box-shadow:0 20px 60px rgba(0,0,0,.55)}
+.field canvas{display:block;width:100%;cursor:none}
+.ovl{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:rgba(8,10,14,.78);backdrop-filter:blur(3px);transition:opacity .25s;text-align:center;padding:16px}.ovl.h{opacity:0;pointer-events:none}
+.ovl h2{letter-spacing:.3em;font-size:26px}.ovl h2 i{color:var(--ac);font-style:normal}.ovl p{color:var(--mu);font-size:13px;max-width:520px;line-height:1.5}
+.big{font-size:84px;font-weight:800;color:var(--ac);animation:pop .5s ease-out}
+.res{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:min(520px,100%)}.res div{background:#171b25;border:1px solid var(--bd);border-radius:8px;padding:8px}.res small{display:block;font-size:10px;letter-spacing:.16em;color:var(--mu)}.res b{font-size:20px}
+.rec{color:var(--ac);font-weight:800;letter-spacing:.16em;font-size:13px}
+.ctl{display:flex;gap:10px;justify-content:center}.ctl button{min-width:120px}
+.row2{display:flex;align-items:center;justify-content:space-between;font-size:13px}.row2 b{color:var(--ac);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--ac)}
+.hint{color:var(--mu);font-size:11px;line-height:1.5;text-align:left}
+</style></head><body>
+<div class="shell">
+<div class="hdr"><b>AIM<i>.</i>TRAINER</b><span>DDV HUB · В СТИЛЕ KOVAAK'S</span></div>
+<div class="layout">
+ <aside class="side">
+  <h3>DIFFICULTY</h3><div class="seg" id="dif"><button data-d="easy">Easy</button><button data-d="medium">Medium</button><button data-d="hard">Hard</button></div>
+  <div class="hint" id="dh"></div>
+  <h3>DURATION</h3><div class="seg h" id="dur"><button data-t="30">30 с</button><button data-t="60">60 с</button><button data-t="120">120 с</button></div>
+  <h3>PERSONAL BEST</h3><div class="hint" id="best" style="font-size:13px;color:var(--tx)"></div>
+ </aside>
+ <main style="display:flex;flex-direction:column;gap:10px;min-width:0">
+  <div class="stats"><div class="sc"><small>SCORE</small><b id="sScore">0</b></div><div class="sc"><small>ACCURACY</small><b id="sAcc">0%</b></div><div class="sc"><small>HITS</small><b id="sHits">0</b></div><div class="sc"><small>MISSES</small><b id="sMiss">0</b></div><div class="sc"><small>TIMER</small><b id="sTime">1:00</b></div></div>
+  <div class="field" id="fw"><canvas id="c"></canvas><div class="ovl" id="ovl"></div></div>
+  <div class="ctl"><button class="pri" id="bs">Start</button><button id="bp">Pause</button><button id="br">Restart</button></div>
+ </main>
+ <aside class="side">
+  <h3>SETTINGS</h3>
+  <div class="row2"><span>Sensitivity</span><b id="sv">1.00×</b></div><input type="range" id="sens" min="0.1" max="5" step="0.05" value="1">
+  <div class="hint">Множитель движения мыши. Работает через захват курсора: чем выше — тем дальше «убегает» прицел.</div>
+  <div class="row2"><span>Crosshair</span><b id="xv">12</b></div><input type="range" id="xh" min="4" max="30" step="1" value="12">
+  <div class="row2"><span>Sound</span><button id="snd" style="padding:6px 14px">On</button></div>
+  <button id="rst">Reset settings</button>
+  <div class="hint">Esc — выйти из захвата мыши (игра встанет на паузу). Попадание по центру мишени и серия попаданий дают больше очков.</div>
+ </aside>
+</div></div>
+<script src="common.js"></script>
+<script>
+gbg(1,1);
+const $=i=>document.getElementById(i),clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const DEF={sens:1,xh:12,snd:1,dif:'medium',dur:60};
+let S={...DEF};try{Object.assign(S,JSON.parse(localStorage.getItem('aimlab_set')))}catch(e){}
+let BEST={};try{BEST=JSON.parse(localStorage.getItem('aimlab_best'))||{}}catch(e){}
+const save=()=>{try{localStorage.setItem('aimlab_set',JSON.stringify(S))}catch(e){}};
+const DIF={
+ easy:{n:2,r:38,sp:[90,150],ch:[1.2,2.5],ang:50,jerk:0,rate:3,pts:100,txt:'Большие и медленные мишени, плавные повороты.'},
+ medium:{n:3,r:26,sp:[170,290],ch:[.8,1.6],ang:100,jerk:.15,rate:6,pts:150,txt:'Средний размер и скорость, частые смены курса.'},
+ hard:{n:4,r:16,sp:[300,520],ch:[.35,.9],ang:180,jerk:.5,rate:16,pts:250,txt:'Маленькие и быстрые мишени, резкие развороты.'}};
+const cv=$('c'),g=cv.getContext('2d');let fw=800,fh=450,dpr=1;
+let state='idle',cd=0,lastN=0,tl=60,tg=[],cur={x:400,y:225},hits=0,miss=0,score=0,streak=0,bestStreak=0,rts=[],fx=[],pts=[],lastT=0,shk=0,newRec=false,locked=false,res=null;
+const K=()=>fw/1000,snd=(f,d,ty,v)=>{if(S.snd)bleep(f,d,ty,v)};
+function size(){const w=$('fw'),nw=Math.max(300,w.clientWidth||800),r=nw/fw;if(r!=1&&tg.length){for(const o of tg){o.x*=r;o.y*=r;o.r*=r;o.sp*=r;o.tsp*=r}cur.x*=r;cur.y*=r}
+ fw=nw;fh=Math.round(fw*9/16);dpr=window.devicePixelRatio||1;cv.width=Math.round(fw*dpr);cv.height=Math.round(fh*dpr);cv.style.height=fh+'px'}
+function spawn(){const d=DIF[S.dif],k=K(),r=d.r*k;let x,y,n=0;
+ do{x=rnd(r+6,fw-r-6);y=rnd(r+6,fh-r-6);n++}while(n<40&&(Math.hypot(x-cur.x,y-cur.y)<150*k||tg.some(o=>Math.hypot(x-o.x,y-o.y)<(o.r+r)*1.7)));
+ const sp=rnd(d.sp[0],d.sp[1])*k,a=rnd(0,6.2832);tg.push({x,y,r,dir:a,tdir:a,sp,tsp:sp,tt:rnd(d.ch[0],d.ch[1]),born:performance.now(),age:0})}
+function move(o,dt){const d=DIF[S.dif],k=K();o.tt-=dt;
+ if(o.tt<=0){o.tt=rnd(d.ch[0],d.ch[1]);o.tdir=o.dir+rnd(-d.ang,d.ang)*Math.PI/180;o.tsp=rnd(d.sp[0],d.sp[1])*k;if(Math.random()<d.jerk){o.dir=o.tdir;o.sp=o.tsp}}
+ const da=((o.tdir-o.dir+Math.PI)%(2*Math.PI)+2*Math.PI)%(2*Math.PI)-Math.PI;o.dir+=da*Math.min(1,dt*d.rate);o.sp+=(o.tsp-o.sp)*Math.min(1,dt*(S.dif=='hard'?12:4));
+ o.x+=Math.cos(o.dir)*o.sp*dt;o.y+=Math.sin(o.dir)*o.sp*dt;
+ if(o.x<o.r){o.x=o.r;o.dir=Math.PI-o.dir;o.tdir=o.dir}else if(o.x>fw-o.r){o.x=fw-o.r;o.dir=Math.PI-o.dir;o.tdir=o.dir}
+ if(o.y<o.r){o.y=o.r;o.dir=-o.dir;o.tdir=o.dir}else if(o.y>fh-o.r){o.y=fh-o.r;o.dir=-o.dir;o.tdir=o.dir}}
+function lock(){try{if(document.pointerLockElement!==cv&&cv.requestPointerLock){const p=cv.requestPointerLock();if(p&&p.catch)p.catch(()=>{})}}catch(e){}}
+function unlock(){try{if(document.exitPointerLock)document.exitPointerLock()}catch(e){}}
+function begin(){size();hits=0;miss=0;score=0;streak=0;bestStreak=0;rts=[];fx=[];pts=[];res=null;newRec=false;tl=S.dur;tg=[];cur={x:fw/2,y:fh/2};for(let i=0;i<DIF[S.dif].n;i++)spawn();state='countdown';cd=3;lastN=0;lock();ui()}
+function pause(){if(state=='running'||state=='countdown'){state='paused';unlock();ui()}}
+function resume(){if(state=='paused'){state='countdown';cd=2;lastN=0;lock();ui()}}
+function finish(){state='finished';unlock();const tot=hits+miss,acc=tot?hits/tot*100:0,key=S.dif+'-'+S.dur,old=BEST[key];newRec=score>0&&(!old||score>old.score);
+ if(newRec){BEST[key]={score,acc:+acc.toFixed(1)};try{localStorage.setItem('aimlab_best',JSON.stringify(BEST))}catch(e){}}
+ res={score,acc,hits,miss,avg:rts.length?Math.round(rts.reduce((a,b)=>a+b,0)/rts.length):0,streak:bestStreak};snd(660,.3,'triangle',.1);ui()}
+function shoot(){let best=null,bd=1e9;for(const o of tg){const dd=Math.hypot(cur.x-o.x,cur.y-o.y);if(dd<=o.r+1.5&&dd<bd){bd=dd;best=o}}
+ if(best){hits++;streak++;bestStreak=Math.max(bestStreak,streak);const d=DIF[S.dif],prec=1-Math.min(1,bd/best.r),mult=1+Math.min(1,streak*.05),gain=Math.round(d.pts*(1+prec*.5)*mult);score+=gain;rts.push(performance.now()-best.born);
+  fx.push({x:best.x,y:best.y,r:best.r,t:0,type:'ring'},{x:best.x,y:best.y-best.r,t:0,type:'txt',s:'+'+gain});
+  for(let i=0;i<10;i++){const a=rnd(0,6.28),v=rnd(80,260);pts.push({x:best.x,y:best.y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,l:.45})}
+  tg.splice(tg.indexOf(best),1);spawn();snd(620+Math.min(streak,20)*18,.05,'triangle',.07)}
+ else{miss++;streak=0;fx.push({x:cur.x,y:cur.y,t:0,type:'miss'});shk=.18;snd(150,.06,'square',.04)}}
+addEventListener('mousemove',e=>{if(state!='running'&&state!='countdown')return;cur.x=clamp(cur.x+(e.movementX||0)*S.sens,0,fw);cur.y=clamp(cur.y+(e.movementY||0)*S.sens,0,fh)});
+addEventListener('mousedown',e=>{if(state=='running'&&e.button===0&&!(e.target&&e.target.closest&&e.target.closest('button,input')))shoot()});
+document.addEventListener('pointerlockchange',()=>{locked=document.pointerLockElement===cv;if(!locked&&state=='running')pause()});
+addEventListener('blur',()=>{if(state=='running')pause()});addEventListener('resize',size);
+addEventListener('keydown',e=>{if(e.code=='Space'&&state=='running'){e.preventDefault();pause()}else if(e.code=='KeyR'&&!e.repeat)begin()});
+const ease=t=>{const c=1.7;return 1+(c+1)*Math.pow(t-1,3)+c*Math.pow(t-1,2)};
+function draw(ts){g.setTransform(dpr,0,0,dpr,0,0);const sx=shk>0?rnd(-shk,shk)*8:0,sy=shk>0?rnd(-shk,shk)*8:0;
+ g.fillStyle='#0d1017';g.fillRect(0,0,fw,fh);g.strokeStyle='rgba(255,255,255,.035)';g.lineWidth=1;g.beginPath();for(let x=0;x<=fw;x+=50){g.moveTo(x,0);g.lineTo(x,fh)}for(let y=0;y<=fh;y+=50){g.moveTo(0,y);g.lineTo(fw,y)}g.stroke();
+ g.save();g.translate(sx,sy);
+ for(const o of tg){const s=Math.max(.01,ease(Math.min(1,o.age/.18))),pu=1+Math.sin(ts/200+o.x)*.03,r=o.r*s*pu;
+  g.shadowColor='#ff7a1a';g.shadowBlur=18;const gr=g.createRadialGradient(o.x-r*.3,o.y-r*.3,r*.1,o.x,o.y,r);gr.addColorStop(0,'#ffd2a8');gr.addColorStop(.45,'#ff8a2c');gr.addColorStop(1,'#c4500a');
+  g.fillStyle=gr;g.beginPath();g.arc(o.x,o.y,r,0,6.2832);g.fill();g.shadowBlur=0;g.strokeStyle='rgba(255,255,255,.85)';g.lineWidth=1.5;g.beginPath();g.arc(o.x,o.y,r*.62,0,6.2832);g.stroke();g.fillStyle='#fff';g.beginPath();g.arc(o.x,o.y,Math.max(1.5,r*.12),0,6.2832);g.fill()}
+ for(const p of pts){g.globalAlpha=Math.max(0,p.l/.45);g.fillStyle='#ffb36b';g.fillRect(p.x,p.y,3,3)}g.globalAlpha=1;
+ for(const f of fx){if(f.type=='ring'){const a=1-f.t/.35;if(a>0){g.strokeStyle=`rgba(255,170,90,${a})`;g.lineWidth=3;g.beginPath();g.arc(f.x,f.y,f.r*(1+f.t*3),0,6.2832);g.stroke()}}
+  else if(f.type=='txt'){const a=1-f.t/.7;if(a>0){g.fillStyle=`rgba(255,220,170,${a})`;g.font='700 16px "Segoe UI",sans-serif';g.textAlign='center';g.fillText(f.s,f.x,f.y-f.t*50)}}
+  else{const a=1-f.t/.4;if(a>0){g.strokeStyle=`rgba(255,70,70,${a})`;g.lineWidth=2.5;g.beginPath();g.moveTo(f.x-7,f.y-7);g.lineTo(f.x+7,f.y+7);g.moveTo(f.x+7,f.y-7);g.lineTo(f.x-7,f.y+7);g.stroke()}}}
+ if(state=='running'||state=='countdown'){const c=S.xh,x=cur.x,y=cur.y;g.strokeStyle='#fff';g.lineWidth=2;g.shadowColor='#000';g.shadowBlur=3;g.beginPath();g.moveTo(x-c,y);g.lineTo(x-4,y);g.moveTo(x+4,y);g.lineTo(x+c,y);g.moveTo(x,y-c);g.lineTo(x,y-4);g.moveTo(x,y+4);g.lineTo(x,y+c);g.stroke();g.shadowBlur=0;g.fillStyle='#ff7a1a';g.beginPath();g.arc(x,y,2.2,0,6.2832);g.fill()}
+ g.restore();
+ if(state=='countdown'&&cd>0){g.fillStyle='rgba(8,10,14,.35)';g.fillRect(0,0,fw,fh);g.fillStyle='#ff7a1a';g.textAlign='center';g.font='800 90px "Segoe UI",sans-serif';g.fillText(Math.ceil(cd),fw/2,fh/2+30)}}
+function frame(ts){const dt=Math.min(.05,(ts-lastT)/1000||0);lastT=ts;
+ for(const o of tg)o.age+=dt;
+ if(state=='countdown'){cd-=dt;const n=Math.ceil(cd);if(n!=lastN&&n>0){lastN=n;snd(520,.08,'sine',.06)}if(cd<=0){state='running';const now=performance.now();for(const o of tg)o.born=now;snd(880,.15,'triangle',.08);ui()}}
+ else if(state=='running'){tl-=dt;for(const o of tg)move(o,dt);if(tl<=0){tl=0;finish()}}
+ shk=Math.max(0,shk-dt);for(const f of fx)f.t+=dt;fx=fx.filter(f=>f.t<.7);for(const p of pts){p.x+=p.vx*dt;p.y+=p.vy*dt;p.l-=dt}pts=pts.filter(p=>p.l>0);
+ draw(ts);stats();requestAnimationFrame(frame)}
+const LS={};function set(id,v){if(LS[id]!==v){LS[id]=v;const e=$(id);e.textContent=v;if(LS[id+'i']){e.classList.remove('pop');void e.offsetWidth;e.classList.add('pop')}LS[id+'i']=1}}
+const ft=t=>Math.floor(t/60)+':'+String(Math.ceil(t%60)==60?59:Math.ceil(t%60)).padStart(2,'0');
+function stats(){const tot=hits+miss;set('sScore',score);set('sAcc',(tot?(hits/tot*100).toFixed(1):'0')+'%');set('sHits',hits);set('sMiss',miss);set('sTime',ft(state=='idle'?S.dur:tl))}
+function ovl(){const o=$('ovl');let h='',hide=false;
+ if(state=='idle')h=`<h2>AIM<i>.</i>TRAINER</h2><p>Следи за движущимися мишенями и кликай точно по ним. Попал — мишень сменится новой в случайном месте. Выбранный режим: <b>${S.dif.toUpperCase()}</b>, <b>${S.dur} с</b>.</p><button class="pri" onclick="begin()">Start</button>`;
+ else if(state=='countdown')hide=true;else if(state=='running')hide=true;
+ else if(state=='paused')h=`<h2>PAUSED</h2><p>Игра на паузе. Нажми Resume — после короткого отсчёта мишени снова двинутся.</p><button class="pri" onclick="resume()">Resume</button>`;
+ else if(state=='finished'&&res)h=`<h2>TIME<i>!</i></h2>${newRec?'<div class="rec">★ NEW PERSONAL BEST ★</div>':''}<div class="res"><div><small>SCORE</small><b>${res.score}</b></div><div><small>ACCURACY</small><b>${res.acc.toFixed(1)}%</b></div><div><small>HITS / MISSES</small><b>${res.hits} / ${res.miss}</b></div><div><small>AVG REACTION</small><b>${res.avg} ms</b></div><div><small>BEST STREAK</small><b>${res.streak}</b></div><div><small>MODE</small><b>${S.dif} · ${S.dur}s</b></div></div><button class="pri" onclick="begin()">Play again</button>`;
+ o.className='ovl'+(hide?' h':'');if(!hide)o.innerHTML=h}
+function ui(){for(const b of $('dif').children)b.classList.toggle('on',b.dataset.d==S.dif);for(const b of $('dur').children)b.classList.toggle('on',+b.dataset.t==S.dur);
+ $('dh').textContent=DIF[S.dif].txt;const bk=BEST[S.dif+'-'+S.dur];$('best').textContent=bk?`${bk.score} очков · ${bk.acc}%`:'— пока нет рекорда';
+ $('bs').textContent=state=='paused'?'Resume':'Start';$('bs').disabled=state=='running'||state=='countdown';$('bp').disabled=!(state=='running'||state=='countdown');$('bp').textContent='Pause';
+ $('sens').value=S.sens;$('sv').textContent=(+S.sens).toFixed(2)+'×';$('xh').value=S.xh;$('xv').textContent=S.xh;$('snd').textContent=S.snd?'On':'Off';ovl()}
+function change(){const was=state=='running'||state=='countdown';state='idle';unlock();tg=[];fx=[];pts=[];hits=0;miss=0;score=0;streak=0;tl=S.dur;LS.sTimei=0;ui();if(was)begin()}
+$('dif').onclick=e=>{const b=e.target.closest('button');if(b&&b.dataset.d){S.dif=b.dataset.d;save();change()}};
+$('dur').onclick=e=>{const b=e.target.closest('button');if(b&&b.dataset.t){S.dur=+b.dataset.t;save();change()}};
+$('sens').oninput=e=>{S.sens=clamp(+$('sens').value,.1,5);$('sv').textContent=S.sens.toFixed(2)+'×';save()};
+$('xh').oninput=e=>{S.xh=clamp(+$('xh').value,4,30);$('xv').textContent=S.xh;save()};
+$('snd').onclick=()=>{S.snd=S.snd?0:1;save();ui()};
+$('rst').onclick=()=>{Object.assign(S,DEF);save();change()};
+$('bs').onclick=()=>{if(state=='paused')resume();else begin()};$('bp').onclick=pause;$('br').onclick=begin;
+size();ui();requestAnimationFrame(frame);
 </script></body></html>

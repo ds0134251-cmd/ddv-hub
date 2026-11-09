@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Банкир</title>
+<style>
+.wrap{max-width:1120px;margin:0 auto;padding:62px 14px 30px;display:flex;flex-direction:column;gap:12px}
+.top{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.st{padding:10px 14px;border-radius:14px;background:rgba(10,6,28,.76);border:1px solid rgba(255,255,255,.16);backdrop-filter:blur(8px)}.st small{opacity:.7;display:block;font-size:10px;letter-spacing:.1em}.st b{font-size:20px;color:var(--c3);font-variant-numeric:tabular-nums}.st.red b{color:#ff7a7a}
+.tabs{display:flex;gap:8px;flex-wrap:wrap}
+.pn{padding:14px;border-radius:18px;background:rgba(10,6,28,.74);border:1px solid rgba(255,255,255,.16);backdrop-filter:blur(8px);display:flex;flex-direction:column;gap:8px}.pn h3{color:var(--c3);font-size:15px}
+.news{padding:8px 14px;border-radius:12px;background:rgba(255,225,74,.1);border:1px solid rgba(255,225,74,.3);font-size:13px;min-height:34px}
+.cards{display:flex;gap:22px;flex-wrap:wrap;justify-content:center;padding:10px 0}.cw{display:flex;flex-direction:column;align-items:center;gap:10px}
+.cc{position:relative;width:270px;height:170px;border-radius:18px;padding:16px;color:#fff;cursor:pointer;overflow:hidden;box-shadow:0 14px 34px rgba(0,0,0,.5);transition:transform .08s;touch-action:manipulation;text-shadow:0 1px 3px rgba(0,0,0,.4)}
+.cc:active{transform:scale(.96) rotate(-1deg)}.cc .nm{font-weight:800;letter-spacing:.2em;font-size:15px}.cc .chip{width:38px;height:28px;border-radius:6px;background:linear-gradient(135deg,#ffe9a8,#c9a240);margin-top:16px}
+.cc .num{font-family:Consolas,monospace;letter-spacing:.14em;margin-top:16px;font-size:15px}.cc .tv{position:absolute;right:14px;bottom:12px;font-weight:800;font-size:20px}.cc .lv{position:absolute;left:16px;bottom:12px;font-size:12px;opacity:.85}
+.cc::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 40%,rgba(255,255,255,.28) 50%,transparent 60%);transform:translateX(-100%);transition:.6s}.cc:hover::after{transform:translateX(100%)}
+.cc.lock{filter:grayscale(.85) brightness(.55);cursor:default}.cc .lk{position:absolute;inset:0;display:grid;place-items:center;font-size:48px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
+.it{padding:12px;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);display:flex;flex-direction:column;gap:6px;font-size:13px}.it h4{font-size:15px}.it .e{font-size:28px}
+.up{color:#6dff9a}.dn{color:#ff7a7a}.cols2{display:grid;grid-template-columns:1fr 1.4fr;gap:12px}@media(max-width:900px){.cols2{grid-template-columns:1fr}}
+.loan{padding:10px;border-radius:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);display:flex;flex-direction:column;gap:6px;font-size:13px}.loan.bad{border-color:#ff5a5a;background:rgba(255,60,60,.1)}
+.fl{position:fixed;pointer-events:none;color:#7dffb0;font-weight:800;animation:fup .9s ease-out forwards;z-index:9;text-shadow:0 0 8px #000}@keyframes fup{to{transform:translateY(-70px);opacity:0}}
+</style></head><body>
+<div class="wrap">
+ <div class="top" id="top"></div>
+ <div class="news" id="news"></div>
+ <div class="tabs" id="tabs"></div>
+ <div id="body"></div>
+</div>
+<script src="common.js"></script>
+<script>
+gbg(1);const $=i=>document.getElementById(i);
+const fmt=n=>{n=Math.floor(n);if(!(n>=0))return'0';if(n<1000)return''+n;const u=['K','M','B','T','Qa','Qi'];for(let i=0;i<u.length;i++)if(n<Math.pow(1000,i+2))return(n/Math.pow(1000,i+1)).toFixed(2)+u[i];return n.toExponential(2)};
+const CARDS=[{n:'CLASSIC',c:['#7b8cff','#3b2f9a'],base:1,upg:40,unl:0,no:'4521'},{n:'GOLD',c:['#ffd75e','#b8801a'],base:12,upg:700,unl:3000,no:'7788'},{n:'PLATINUM',c:['#b9c4dc','#56658a'],base:160,upg:9000,unl:80000,no:'0001'}];
+const PROPS=[{id:'room',n:'Комната в общаге',e:'🛏️',price:800,rent:1.2},{id:'flat',n:'Квартира',e:'🏢',price:9000,rent:16},{id:'house',n:'Дом',e:'🏠',price:65000,rent:100},{id:'office',n:'Офисный этаж',e:'🏬',price:420000,rent:560},{id:'mall',n:'Торговый центр',e:'🛍️',price:3.2e6,rent:3600},{id:'tower',n:'Небоскрёб',e:'🏙️',price:28e6,rent:28000},{id:'island',n:'Частный остров',e:'🏝️',price:350e6,rent:380000}];
+const BIZ=[{id:'stall',n:'Ларёк с шаурмой',e:'🥙',cost:150,inc:.6},{id:'cafe',n:'Кофейня',e:'☕',cost:1800,inc:7},{id:'shop',n:'Магазин',e:'🛒',cost:14000,inc:55},{id:'factory',n:'Завод',e:'🏭',cost:110000,inc:420},{id:'it',n:'IT-компания',e:'💻',cost:900000,inc:3100},{id:'bank',n:'Свой банк',e:'🏦',cost:8e6,inc:24000},{id:'space',n:'Космическая корпорация',e:'🚀',cost:1e8,inc:260000}];
+const TITLES=[[0,'Бедолага'],[1e3,'Клерк'],[1e4,'Менеджер'],[1e5,'Банкир'],[1e6,'Миллионер'],[1e8,'Магнат'],[1e9,'Миллиардер'],[1e11,'Олигарх']];
+let S={cash:50,dep:0,loans:[],cl:[1,0,0],prop:{},biz:{},M:{},sc:700,t:Date.now(),taps:0,tot:0,start:Date.now(),boost:0,news:'Добро пожаловать в банк! Тапай по карте, чтобы заработать первые деньги.',nextEv:60,seized:0};
+try{const v=JSON.parse(localStorage.getItem('bnk1'));if(v)Object.assign(S,v)}catch(e){}
+PROPS.forEach(p=>{if(!(S.M[p.id]>0))S.M[p.id]=1});
+const own=id=>S.prop[id]|0,bz=id=>S.biz[id]||{n:0,lv:0};
+const pCost=p=>Math.round(p.price*S.M[p.id]*(1+.04*own(p.id))),pSell=p=>Math.round(p.price*S.M[p.id]*.95);
+const bCost=b=>Math.ceil(b.cost*Math.pow(1.15,bz(b.id).n)),bInc=b=>b.inc*bz(b.id).n*Math.pow(2,bz(b.id).lv),bUp=b=>b.cost*20*Math.pow(5,bz(b.id).lv);
+const rent=()=>PROPS.reduce((a,p)=>a+own(p.id)*p.rent,0),bizInc=()=>BIZ.reduce((a,b)=>a+bInc(b),0)*(S.boost>0?2:1);
+const debt=()=>S.loans.reduce((a,l)=>a+l.rem,0);
+const assets=()=>S.cash+S.dep+PROPS.reduce((a,p)=>a+own(p.id)*pSell(p),0)+BIZ.reduce((a,b)=>a+bz(b.id).n*b.cost*.6,0),worth=()=>assets()-debt();
+const rate=()=>.025-(S.sc-300)/550*.017,limit=()=>Math.max(1000,Math.floor((assets()*.6+2000)*(S.sc/700)));
+const tapVal=i=>CARDS[i].base*Math.pow(1.5,S.cl[i]-1),upCost=i=>Math.round(CARDS[i].upg*Math.pow(1.9,S.cl[i]-1));
+const title=()=>{let t=TITLES[0][1];for(const [v,n] of TITLES)if(worth()>=v)t=n;return t};
+const news=t=>{S.news=t;$('news').textContent=t};
+const EV=[()=>{PROPS.forEach(p=>S.M[p.id]=Math.min(2,S.M[p.id]*1.15));return'📈 Бум на рынке недвижимости: цены +15%!'},
+ ()=>{PROPS.forEach(p=>S.M[p.id]=Math.max(.5,S.M[p.id]*.82));return'📉 Кризис! Недвижимость подешевела на 18%.'},
+ ()=>{const t=S.cash*.04;S.cash-=t;return'🧾 Налоговая проверка: списано $'+fmt(t)},
+ ()=>{const g=Math.max(50,(rent()+bizInc())*45);S.cash+=g;return'🎁 Госсубсидия: +$'+fmt(g)},
+ ()=>{S.boost=30;return'🚀 Удачная сделка! Доход бизнесов ×2 на 30 секунд.'},
+ ()=>{const t=S.cash*.02;S.cash-=t;return'🦹 Мошенники списали $'+fmt(t)+' с карты. Береги PIN!'}];
+let mk=5,bk=1,combo=0,lastTap=-1e9,tab=0,held=0,rs=0,sv=0;
+function seize(){S.cash=0;S.dep=0;for(const p of PROPS)S.prop[p.id]=own(p.id)>>1;for(const b of BIZ){const z=bz(b.id);if(z.n)S.biz[b.id]={n:z.n>>1,lv:z.lv}}S.loans=[];S.sc=300;S.seized++;news('🚨 Коллекторы! Ты неплательщик: изъяты деньги, вклад и половина имущества. Долги списаны, рейтинг 300.')}
+function tick(dt){const inc=(rent()+bizInc())*dt;S.cash+=inc;S.tot+=inc;S.dep+=S.dep*.008/60*dt;
+ for(const l of S.loans){l.age+=dt;const od=l.age>l.term;l.rem+=l.rem*rate()*(od?3:1)/60*dt;if(od&&!l.od){l.od=1;S.sc=Math.max(300,S.sc-30);news('⚠️ Кредит просрочен! Рейтинг упал, проценты ×3.')}if(l.od){l.odT=(l.odT||0)+dt;if(l.odT>=60){l.odT-=60;S.sc=Math.max(300,S.sc-10)}}}
+ S.boost=Math.max(0,S.boost-dt);mk-=dt;if(mk<=0){mk=5;PROPS.forEach(p=>{let m=S.M[p.id];m*=1+(Math.random()-.5)*.05+(1-m)*.02;S.M[p.id]=Math.max(.5,Math.min(2,m))})}
+ S.nextEv-=dt;if(S.nextEv<=0){S.nextEv=rnd(45,90);news(EV[Math.random()*EV.length|0]())}
+ bk-=dt;if(bk<=0){bk=1;if(debt()>2000&&worth()<0&&S.loans.some(l=>l.od))seize()}}
+function offline(){const off=Math.min(4*3600,(Date.now()-S.t)/1000);if(off>60){const g=(rent()+bizInc())*off*.5+S.dep*.008/60*off*.5;S.cash+=g;S.tot+=g;S.news='Пока тебя не было, заработано $'+fmt(g)+' (50% от дохода, до 4 часов).'}S.t=Date.now()}
+function no(m){msg(m||'Не хватает денег');bleep(150,.08,'square',.05)}function ok(){bleep(700,.1,'triangle',.07)}
+function act(s){const [k,a,b]=s.split(':');
+ if(k=='tab'){tab=+a;draw();return}
+ if(k=='unl'){const c=CARDS[+a];if(S.cash>=c.unl){S.cash-=c.unl;S.cl[+a]=1;ok()}else no()}
+ else if(k=='upc'){const c=upCost(+a);if(S.cash>=c){S.cash-=c;S.cl[+a]++;ok()}else no()}
+ else if(k=='pb'){const p=PROPS.find(x=>x.id==a),c=pCost(p);if(S.cash>=c){S.cash-=c;S.prop[a]=own(a)+1;ok()}else no()}
+ else if(k=='ps'){const p=PROPS.find(x=>x.id==a);if(own(a)){S.cash+=pSell(p);S.prop[a]=own(a)-1;ok()}}
+ else if(k=='bb'){const bb=BIZ.find(x=>x.id==a),c=bCost(bb);if(S.cash>=c){S.cash-=c;S.biz[a]={n:bz(a).n+1,lv:bz(a).lv};ok()}else no()}
+ else if(k=='bu'){const bb=BIZ.find(x=>x.id==a),c=bUp(bb),z=bz(a);if(z.n&&z.lv<4&&S.cash>=c){S.cash-=c;S.biz[a]={n:z.n,lv:z.lv+1};ok()}else no()}
+ else if(k=='di'){const x=Math.floor(S.cash*+a);if(x>0){S.cash-=x;S.dep+=x;ok()}else no()}
+ else if(k=='do'){const x=Math.floor(S.dep*+a);if(x>0){S.dep-=x;S.cash+=x;ok()}}
+ else if(k=='loan'){const free=Math.floor(limit()-debt());let x=a=='max'?free:+a;if(x<=0||x>free){no('Лимит кредита: $'+fmt(limit())+', свободно $'+fmt(Math.max(0,free)));return}S.cash+=x;S.loans.push({p:x,rem:x,age:0,term:300,od:0});news('💳 Кредит $'+fmt(x)+' выдан на 5 минут под '+(rate()*100).toFixed(2)+'% в минуту.');ok()}
+ else if(k=='rp'){const l=S.loans[+a],fr=+b;if(!l)return;let x=fr>=1?l.rem:l.rem*fr;x=Math.min(x,S.cash);if(x<.5){no();return}S.cash-=x;l.rem-=x;if(l.rem<1){if(!l.od)S.sc=Math.min(850,S.sc+20);S.loans.splice(+a,1);news('✅ Кредит погашен'+(l.od?'':' вовремя — рейтинг вырос!'))}ok()}
+ else if(k=='reset'){if(!rs){rs=1;draw();return}try{localStorage.removeItem('bnk1')}catch(e){}location.reload();return}
+ draw()}
+function tap(i,e){if(!S.cl[i])return;const now=performance.now();combo=now-lastTap<700?Math.min(20,combo+1):0;lastTap=now;const v=tapVal(i)*(1+combo*.05);S.cash+=v;S.tot+=v;S.taps++;
+ const f=document.createElement('div');f.className='fl';f.textContent='+$'+fmt(v);f.style.left=((e&&e.clientX)||300)+'px';f.style.top=((e&&e.clientY)||300)+'px';document.body.appendChild(f);setTimeout(()=>f.remove(),900);bleep(520+combo*20,.04,'triangle',.05);setTop()}
+function setTop(){const inc=rent()+bizInc();$('top').innerHTML=`<div class="st"><small>НАЛИЧНЫЕ</small><b>$${fmt(S.cash)}</b></div><div class="st"><small>ВКЛАД</small><b>$${fmt(S.dep)}</b></div><div class="st ${debt()>0?'red':''}"><small>ДОЛГ</small><b>$${fmt(debt())}</b></div><div class="st"><small>ЧИСТЫЙ КАПИТАЛ</small><b>$${fmt(Math.max(0,worth()))}</b></div><div class="st"><small>ДОХОД В СЕКУНДУ</small><b>$${fmt(inc)}</b></div><div class="st"><small>ТИТУЛ</small><b>${title()}</b>${combo>2?'<small>комбо +'+combo*5+'%</small>':''}</div>`}
+const rCards=()=>`<div class="cards">${CARDS.map((c,i)=>{const lv=S.cl[i],bg=`background:linear-gradient(135deg,${c.c[0]},${c.c[1]})`;
+ if(!lv)return`<div class="cw"><div class="cc lock" style="${bg}"><div class="nm">${c.n}</div><div class="chip"></div><div class="num">•••• •••• •••• ${c.no}</div><div class="lk">🔒</div></div><button data-a="unl:${i}" data-cost="${c.unl}">Открыть за $${fmt(c.unl)}</button></div>`;
+ return`<div class="cw"><div class="cc" data-tap="${i}" style="${bg}"><div class="nm">${c.n}</div><div class="chip"></div><div class="num">•••• •••• •••• ${c.no}</div><div class="lv">уровень ${lv}</div><div class="tv">+$${fmt(tapVal(i))}</div></div><button data-a="upc:${i}" data-cost="${upCost(i)}">Улучшить — $${fmt(upCost(i))}</button></div>`}).join('')}</div><div class="hint" style="text-align:center">Тапай по картам! Быстрые тапы подряд дают комбо до +100%. Золотая и платиновая карты открываются за деньги.</div>`;
+const rProps=()=>`<div class="grid">${PROPS.map(p=>{const m=S.M[p.id];return`<div class="it"><div class="e">${p.e}</div><h4>${p.n}</h4><div>В собственности: <b>${own(p.id)}</b> · аренда <b>$${fmt(p.rent)}</b>/с</div><div>Рынок: <b class="${m>=1?'up':'dn'}">${m>=1?'▲':'▼'} ${Math.round(m*100)}%</b></div><div class="row"><button data-a="pb:${p.id}" data-cost="${pCost(p)}">Купить $${fmt(pCost(p))}</button><button data-a="ps:${p.id}" ${own(p.id)?'':'data-off="1" disabled'}>Продать $${fmt(pSell(p))}</button></div></div>`}).join('')}</div><div class="hint">Цены на недвижимость колеблются: покупай дешевле рынка, продавай дороже. Аренда идёт каждую секунду, пока объект твой.</div>`;
+const rBiz=()=>`<div class="grid">${BIZ.map(b=>{const z=bz(b.id),max=z.lv>=4,off=z.n==0||max;return`<div class="it"><div class="e">${b.e}</div><h4>${b.n}</h4><div>Куплено: <b>${z.n}</b> · доход <b>$${fmt(bInc(b))}</b>/с</div><div>Менеджеры: ${'★'.repeat(z.lv)}${'☆'.repeat(4-z.lv)} (×${Math.pow(2,z.lv)})</div><div class="row"><button data-a="bb:${b.id}" data-cost="${bCost(b)}">Купить $${fmt(bCost(b))}</button><button data-a="bu:${b.id}" data-cost="${bUp(b)}" ${off?'data-off="1" disabled':''}>${max?'Макс.':'Менеджер $'+fmt(bUp(b))}</button></div></div>`}).join('')}</div>`;
+const rBank=()=>{const free=Math.max(0,Math.floor(limit()-debt()));return`<div class="cols2"><div class="pn"><h3>🏦 Вклад</h3><div>На вкладе: <b>$${fmt(S.dep)}</b> · ставка <b>0.8%</b> в минуту</div><div class="row"><button data-a="di:.1">Положить 10%</button><button data-a="di:.5">50%</button><button data-a="di:1">Всё</button></div><div class="row"><button data-a="do:.5">Снять 50%</button><button data-a="do:1">Снять всё</button></div><div class="hint">Деньги на вкладе не воруют мошенники и приносят проценты, но не тратятся на покупки.</div></div>
+<div class="pn"><h3>💳 Кредиты</h3><div>Рейтинг: <b>${S.sc}</b> · ставка <b>${(rate()*100).toFixed(2)}%</b>/мин · лимит <b>$${fmt(limit())}</b> · свободно <b>$${fmt(free)}</b></div>
+<div class="row">${[1000,10000,100000,1e6,1e7].map(a=>`<button data-a="loan:${a}" ${a>free?'data-off="1"':''}>+ $${fmt(a)}</button>`).join('')}<button data-a="loan:max">Максимум</button></div>
+${S.loans.length?S.loans.map((l,i)=>`<div class="loan ${l.od?'bad':''}"><div>Кредит #${i+1}: осталось <b>$${fmt(l.rem)}</b> ${l.od?'<span class="dn">ПРОСРОЧЕН</span>':'· срок ещё '+Math.max(0,Math.ceil(l.term-l.age))+' с'}</div><div class="row"><button data-a="rp:${i}:.1">Погасить 10%</button><button data-a="rp:${i}:.5">50%</button><button data-a="rp:${i}:1">Всё</button></div></div>`).join(''):'<div class="hint">Кредитов нет. Взял в долг — верни вовремя: так растёт рейтинг, а за просрочку проценты утраиваются, и могут прийти коллекторы.</div>'}</div></div>`};
+const rStats=()=>{const t=Math.floor((Date.now()-S.start)/1000);return`<div class="pn"><h3>📊 Статистика</h3><div>Титул: <b>${title()}</b> · чистый капитал <b>$${fmt(Math.max(0,worth()))}</b></div><div>Доход: аренда <b>$${fmt(rent())}</b>/с + бизнесы <b>$${fmt(bizInc())}</b>/с${S.boost>0?' (×2 ещё '+Math.ceil(S.boost)+' с)':''}</div><div>Активы <b>$${fmt(assets())}</b> · долги <b>$${fmt(debt())}</b> · кредитный рейтинг <b>${S.sc}</b></div><div>Всего заработано: <b>$${fmt(S.tot)}</b> · тапов: <b>${S.taps}</b> · вылетов к коллекторам: <b>${S.seized}</b></div><div>Время в игре: <b>${Math.floor(t/60)} мин</b></div><div class="hint">Цель: стать олигархом ($100 млрд чистого капитала). Игра сохраняется сама, а когда тебя нет — копит 50% дохода до 4 часов.</div><button data-a="reset">${rs?'Точно? Нажми ещё раз':'Сбросить прогресс'}</button></div>`};
+const TABS=['💳 Карты','🏠 Недвижимость','🏭 Бизнесы','🏦 Банк','📊 Статистика'],VIEWS=[rCards,rProps,rBiz,rBank,rStats];
+function draw(){$('tabs').innerHTML=TABS.map((t,i)=>`<button class="${i==tab?'sel':''}" data-a="tab:${i}">${t}</button>`).join('');$('body').innerHTML=VIEWS[tab]();setTop();refresh()}
+function refresh(){document.querySelectorAll('button[data-cost]').forEach(b=>{b.disabled=S.cash<+b.dataset.cost||b.hasAttribute('data-off')})}
+$('body').onclick=e=>{const b=e.target.closest('[data-a]');if(b&&!b.disabled)act(b.dataset.a)};
+$('tabs').onclick=e=>{const b=e.target.closest('[data-a]');if(b)act(b.dataset.a)};
+$('body').onpointerdown=e=>{const c=e.target.closest('[data-tap]');if(c)tap(+c.dataset.tap,e)};
+addEventListener('pointerdown',()=>{held=1});addEventListener('pointerup',()=>{held=0});
+offline();news(S.news);draw();
+setInterval(()=>{tick(.1);setTop();if(tab==0)refresh()},100);
+setInterval(()=>{if(tab!=0&&!held)draw()},1000);
+setInterval(()=>{S.t=Date.now();try{localStorage.setItem('bnk1',JSON.stringify(S))}catch(e){}},5000);
+addEventListener('beforeunload',()=>{S.t=Date.now();try{localStorage.setItem('bnk1',JSON.stringify(S))}catch(e){}});
+</script></body></html>

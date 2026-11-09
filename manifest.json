@@ -1,7 +1,7 @@
 {
  "name": "DDV Game Hub",
- "version": "1.0.0",
- "updated": "2026-11-05 01:25",
+ "version": "1.0.2",
+ "updated": "2026-11-09 23:42",
  "notes": "",
  "facts": [
   "DDV Game Hub — проект создателя ddv_7202",
@@ -12,8 +12,13 @@
  "files": [
   {
    "path": "aim.html",
-   "sha256": "81be5516367538245e16196571fe500eb8517748f25f2503d8461c660a2d9ce3",
-   "size": 3043
+   "sha256": "14c74cc9230e5505aadc9a41bc6f92189db9ccafb5c4afa245c14f7977535401",
+   "size": 17210
+  },
+  {
+   "path": "bank.html",
+   "sha256": "f14c7796a43c5f1f737c69828bd8e3312f835f9aa9eb03b2fbc31ae825ead439",
+   "size": 18400
   },
   {
    "path": "blackjack.html",
@@ -37,8 +42,8 @@
   },
   {
    "path": "common.js",
-   "sha256": "ca371d762521ec18b8499c73ae12462e395c15ac34f7b0bdcc3014a0a540374f",
-   "size": 26308
+   "sha256": "a9638d2001a82b0037eee4af041f5a00b67f1a8cfadd593f37269f2fe695c0ae",
+   "size": 26323
   },
   {
    "path": "dice.html",
@@ -72,8 +77,8 @@
   },
   {
    "path": "launcher.html",
-   "sha256": "0bba31aaff884f3ea8b4b51ebefeda42da8a30d89974b3d54ec641754a2a2dd6",
-   "size": 19115
+   "sha256": "8e28f47da13d81273f93a72d8dc1fa6d39a4041645703496c297ba5ce7ec06fa",
+   "size": 21241
   },
   {
    "path": "memory.html",
@@ -89,6 +94,11 @@
    "path": "piano.html",
    "sha256": "4a36e42bc5ba63d2e1b7bbc9e053fa62e66f67a081b9188aa91e4cc1146a2e71",
    "size": 3762
+  },
+  {
+   "path": "plow.html",
+   "sha256": "9d6d68b675d59f4ee4c19ec18751c140b24f9f3ab018f6e81c9d22548fe7df0e",
+   "size": 13454
   },
   {
    "path": "poker.html",
